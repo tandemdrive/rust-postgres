@@ -3,12 +3,11 @@ use crate::{
     CancelToken, Config, CopyInWriter, CopyOutReader, Notifications, RowIter, Statement,
     ToStatement, Transaction, TransactionBuilder,
 };
-use futures_util::stream::BoxStream;
 use std::task::Poll;
 use std::time::Duration;
 use tokio_postgres::tls::{MakeTlsConnect, TlsConnect};
-use tokio_postgres::types::{BorrowToSql, FromSqlOwned, ToSql, Type};
-use tokio_postgres::{Error, FromRow, Row, RowStream, SimpleQueryMessage, Socket};
+use tokio_postgres::types::{BorrowToSql, ToSql, Type};
+use tokio_postgres::{Error, Row, SimpleQueryMessage, Socket};
 
 /// A synchronous PostgreSQL client.
 pub struct Client {
@@ -116,35 +115,6 @@ impl Client {
         self.connection.block_on(self.client.query(query, params))
     }
 
-    /// Returns a vector of rows
-    pub fn query_all(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<Row>, Error> {
-        self.connection.block_on(self.client.query_all(sql, params))
-    }
-
-    /// Returns a vector of `T`s
-    pub fn query_all_as<T: FromRow>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<T>, Error> {
-        self.connection
-            .block_on(self.client.query_all_as(sql, params))
-    }
-
-    /// Returns a vector of scalars
-    pub fn query_all_scalar<T: FromSqlOwned>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<T>, Error> {
-        self.connection
-            .block_on(self.client.query_all_scalar(sql, params))
-    }
-
     /// Executes a statement which returns a single row, returning it.
     ///
     /// Returns an error if the query does not return exactly one row.
@@ -177,26 +147,6 @@ impl Client {
     {
         self.connection
             .block_on(self.client.query_one(query, params))
-    }
-
-    /// Like [`Client::query_one`] but converts row to `T`.
-    pub fn query_one_as<T: FromRow>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<T, Error> {
-        self.connection
-            .block_on(self.client.query_one_as(sql, params))
-    }
-
-    /// Like [`Client::query_scalar_one`] but returns one scalar
-    pub fn query_scalar_one<T: FromSqlOwned>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<T, Error> {
-        self.connection
-            .block_on(self.client.query_scalar_one(sql, params))
     }
 
     /// Executes a statement which returns zero or one rows, returning it.
@@ -240,26 +190,6 @@ impl Client {
     {
         self.connection
             .block_on(self.client.query_opt(query, params))
-    }
-
-    /// Like [`Client::query_opt`] but converts row into `T`
-    pub fn query_opt_as<T: FromRow>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Option<T>, Error> {
-        self.connection
-            .block_on(self.client.query_opt_as(sql, params))
-    }
-
-    /// Like [`Client::query_opt`] but returns an optional scalar
-    pub fn query_scalar_opt<S: FromSqlOwned>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Option<S>, Error> {
-        self.connection
-            .block_on(self.client.query_scalar_opt(sql, params))
     }
 
     /// A maximally-flexible version of `query`.
@@ -325,24 +255,6 @@ impl Client {
             .connection
             .block_on(self.client.query_raw(query, params))?;
         Ok(RowIter::new(self.connection.as_ref(), stream))
-    }
-
-    /// Returns a stream of rows
-    pub fn stream(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<RowStream, Error> {
-        self.connection.block_on(self.client.stream(sql, params))
-    }
-
-    /// Returns a stream of `T`s
-    pub fn stream_as<T: FromRow>(
-        &mut self,
-        sql: &str,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<BoxStream<'static, Result<T, Error>>, Error> {
-        self.connection.block_on(self.client.stream_as(sql, params))
     }
 
     /// Creates a new prepared statement.
@@ -508,11 +420,6 @@ impl Client {
     /// them to this method!
     pub fn batch_execute(&mut self, query: &str) -> Result<(), Error> {
         self.connection.block_on(self.client.batch_execute(query))
-    }
-
-    /// Alias for [`Client::transaction`]
-    pub fn begin(&mut self) -> Result<Transaction<'_>, Error> {
-        self.transaction()
     }
 
     /// Begins a new database transaction.

@@ -4,7 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{DeriveInput, Result};
 
-/// Calls the fallible entry point and writes any errors to the tokenstream.
+/// Calls the fallible entry point and writes any errors to the token stream.
 /// Fallible entry point for generating a `FromRow` implementation
 pub fn try_derive_from_row(input: &DeriveInput) -> std::result::Result<TokenStream, Error> {
     let from_row_derive = DeriveFromRow::from_derive_input(input)?;
@@ -103,14 +103,14 @@ struct FromRowField {
     ident: Option<syn::Ident>,
     /// The type specified in this field.
     ty: syn::Type,
-    /// Wether to flatten this field. Flattening means calling the `FromRow` implementation
+    /// Whether to flatten this field. Flattening means calling the `FromRow` implementation
     /// of `self.ty` instead of extracting it directly from the row.
     #[darling(default)]
     flatten: bool,
-    /// Optionaly use this type as the target for `FromRow` or `FromSql`, and then
+    /// Optionally use this type as the target for `FromRow` or `FromSql`, and then
     /// call `TryFrom::try_from` to convert it the `self.ty`.
     try_from: Option<String>,
-    /// Optionaly use this type as the target for `FromRow` or `FromSql`, and then
+    /// Optionally use this type as the target for `FromRow` or `FromSql`, and then
     /// call `From::from` to convert it the `self.ty`.
     from: Option<String>,
     /// Override the name of the actual sql column instead of using `self.ident`.
@@ -119,7 +119,7 @@ struct FromRowField {
 }
 
 impl FromRowField {
-    /// Checks wether this field has a valid combination of attributes
+    /// Checks whether this field has a valid combination of attributes
     fn validate(&self) -> Result<()> {
         if self.from.is_some() && self.try_from.is_some() {
             return Err(Error::custom(
@@ -138,7 +138,7 @@ impl FromRowField {
         Ok(())
     }
 
-    /// Returns a tokenstream of the type that should be returned from either
+    /// Returns a token stream of the type that should be returned from either
     /// `FromRow` (when using `flatten`) or `FromSql`.
     fn target_ty(&self) -> Result<TokenStream2> {
         if let Some(from) = &self.from {
@@ -150,7 +150,7 @@ impl FromRowField {
         }
     }
 
-    /// Returns the name that maps to the actuall sql column
+    /// Returns the name that maps to the actual sql column.
     /// By default this is the same as the rust field name but can be overwritten by `#[from_row(rename = "..")]`.
     fn column_name(&self) -> String {
         self.rename
@@ -190,7 +190,7 @@ impl FromRowField {
         Ok(())
     }
 
-    /// Generate the line needed to retrievee this field from a row when calling `from_row`.
+    /// Generate the line needed to retrieve this field from a row when calling `from_row`.
     fn generate_from_row(&self) -> Result<TokenStream2> {
         let ident = self.ident.as_ref().unwrap();
         let column_name = self.column_name();

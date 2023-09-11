@@ -2,6 +2,9 @@
 
 use crate::{Error, Row};
 
+#[cfg(feature = "derive")]
+pub use tokio_postgres_derive::FromRow;
+
 /// A trait for types that can be created from a Postgres row.
 pub trait FromRow: Sized {
     /// Performs the conversion
