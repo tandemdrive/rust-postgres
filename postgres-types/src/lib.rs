@@ -5,7 +5,7 @@
 //!
 //! # Derive
 //!
-//! If the `derive` cargo feature is enabled, you can derive `ToSql` and `FromSql` implementations for custom Postgres
+//! If the `derive` cargo feature is enabled, you can derive `ToSql`, `FromSql` and `FromRow` implementations for custom Postgres
 //! types. Explicitly, modify your `Cargo.toml` file to include the following:
 //!
 //! ```toml
@@ -188,7 +188,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[cfg(feature = "derive")]
-pub use postgres_derive::{FromSql, ToSql};
+pub use postgres_derive::{FromRow, FromSql, ToSql};
 
 #[cfg(feature = "with-serde_json-1")]
 pub use crate::serde_json_1::Json;

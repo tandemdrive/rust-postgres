@@ -4,12 +4,13 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, DeriveInput};
 
 mod accepts;
 mod case;
 mod composites;
 mod enums;
+mod from_row;
 mod fromsql;
 mod overrides;
 mod tosql;
@@ -30,4 +31,13 @@ pub fn derive_fromsql(input: TokenStream) -> TokenStream {
     fromsql::expand_derive_fromsql(input)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
+}
+
+#[proc_macro_derive(FromRow, attributes(from_row))]
+pub fn derive_from_row(input: TokenStream) -> TokenStream {
+    let derive_input = parse_macro_input!(input as DeriveInput);
+    match from_row::try_derive_from_row(&derive_input) {
+        Ok(result) => result,
+        Err(err) => err.write_errors().into(),
+    }
 }

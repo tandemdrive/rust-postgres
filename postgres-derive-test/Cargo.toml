@@ -7,5 +7,6 @@ edition = "2018"
 [dev-dependencies]
 trybuild = "1.0"
 
+tokio-postgres = { path = "../tokio-postgres"}
 postgres-types = { path = "../postgres-types", features = ["derive"] }
 postgres = { path = "../postgres" }
