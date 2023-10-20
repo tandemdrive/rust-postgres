@@ -324,6 +324,7 @@ impl error::Error for DbError {}
 
 /// Represents the position of an error in a query.
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[allow(variant_size_differences)]
 pub enum ErrorPosition {
     /// A position in the original query.
     Original(u32),
