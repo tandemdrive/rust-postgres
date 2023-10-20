@@ -112,22 +112,22 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<TokenStream, Error> {
     let generics = append_generic_bound(input.generics.to_owned(), &new_tosql_bound());
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let out = quote! {
-        impl #impl_generics postgres_types::ToSql for #ident #ty_generics #where_clause {
+        impl #impl_generics ::postgres_types::ToSql for #ident #ty_generics #where_clause {
             fn to_sql(&self,
-                      _type: &postgres_types::Type,
-                      buf: &mut postgres_types::private::BytesMut)
-                      -> std::result::Result<postgres_types::IsNull,
-                                             std::boxed::Box<std::error::Error +
-                                                             std::marker::Sync +
-                                                             std::marker::Send>> {
+                      _type: &::postgres_types::Type,
+                      buf: &mut ::postgres_types::private::BytesMut)
+                      -> ::std::result::Result<::postgres_types::IsNull,
+                                             ::std::boxed::Box<dyn ::std::error::Error +
+                                                             ::std::marker::Sync +
+                                                             ::std::marker::Send>> {
                 #to_sql_body
             }
 
-            fn accepts(type_: &postgres_types::Type) -> bool {
+            fn accepts(type_: &::postgres_types::Type) -> bool {
                 #accepts_body
             }
 
-            postgres_types::to_sql_checked!();
+            ::postgres_types::to_sql_checked!();
         }
     };
 
@@ -136,7 +136,7 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<TokenStream, Error> {
 
 fn transparent_body() -> TokenStream {
     quote! {
-        postgres_types::ToSql::to_sql(&self.0, _type, buf)
+        ::postgres_types::ToSql::to_sql(&self.0, _type, buf)
     }
 }
 
@@ -153,18 +153,18 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> TokenStream {
         };
 
         buf.extend_from_slice(s.as_bytes());
-        std::result::Result::Ok(postgres_types::IsNull::No)
+        ::std::result::Result::Ok(::postgres_types::IsNull::No)
     }
 }
 
 fn domain_body() -> TokenStream {
     quote! {
         let type_ = match *_type.kind() {
-            postgres_types::Kind::Domain(ref type_) => type_,
+            ::postgres_types::Kind::Domain(ref type_) => type_,
             _ => unreachable!(),
         };
 
-        postgres_types::ToSql::to_sql(&self.0, type_, buf)
+        ::postgres_types::ToSql::to_sql(&self.0, type_, buf)
     }
 }
 
@@ -174,7 +174,7 @@ fn composite_body(fields: &[Field]) -> TokenStream {
 
     quote! {
         let fields = match *_type.kind() {
-            postgres_types::Kind::Composite(ref fields) => fields,
+            ::postgres_types::Kind::Composite(ref fields) => fields,
             _ => unreachable!(),
         };
 
@@ -187,18 +187,18 @@ fn composite_body(fields: &[Field]) -> TokenStream {
             buf.extend_from_slice(&[0; 4]);
             let r = match field.name() {
                 #(
-                    #field_names => postgres_types::ToSql::to_sql(&self.#field_idents, field.type_(), buf),
+                    #field_names => ::postgres_types::ToSql::to_sql(&self.#field_idents, field.type_(), buf),
                 )*
                 _ => unreachable!(),
             };
 
             let count = match r? {
-                postgres_types::IsNull::Yes => -1,
-                postgres_types::IsNull::No => {
+                ::postgres_types::IsNull::Yes => -1,
+                ::postgres_types::IsNull::No => {
                     let len = buf.len() - base - 4;
-                    if len > i32::max_value() as usize {
-                        return std::result::Result::Err(
-                            std::convert::Into::into("value too large to transmit"));
+                    if len > i32::MAX as usize {
+                        return ::std::result::Result::Err(
+                            ::std::convert::Into::into("value too large to transmit"));
                     }
                     len as i32
                 }
@@ -207,7 +207,7 @@ fn composite_body(fields: &[Field]) -> TokenStream {
             buf[base..base + 4].copy_from_slice(&count.to_be_bytes());
         }
 
-        std::result::Result::Ok(postgres_types::IsNull::No)
+        ::std::result::Result::Ok(::postgres_types::IsNull::No)
     }
 }
 

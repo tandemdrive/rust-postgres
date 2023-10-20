@@ -6,7 +6,7 @@ use syn::{DeriveInput, Result};
 
 /// Calls the fallible entry point and writes any errors to the token stream.
 /// Fallible entry point for generating a `FromRow` implementation
-pub fn derive_from_row(input: &DeriveInput) -> core::result::Result<TokenStream, Error> {
+pub fn derive_from_row(input: &DeriveInput) -> std::result::Result<TokenStream, Error> {
     let from_row_derive = DeriveFromRow::from_derive_input(input)?;
     Ok(from_row_derive.generate()?)
 }
@@ -70,10 +70,10 @@ impl DeriveFromRow {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(quote! {
-            impl #impl_generics tokio_postgres::FromRow for #ident #ty_generics where #(#original_predicates),* #(#predicates),* {
+            impl #impl_generics ::tokio_postgres::FromRow for #ident #ty_generics where #(#original_predicates),* #(#predicates),* {
 
-                fn from_row(row: &tokio_postgres::Row) -> ::core::result::Result<Self, tokio_postgres::Error> {
-                ::core::result::Result::Ok(
+                fn from_row(row: &::tokio_postgres::Row) -> ::std::result::Result<Self, ::tokio_postgres::Error> {
+                ::std::result::Result::Ok(
                     Self {
                         #(#from_row_fields),*
                     })
@@ -153,28 +153,28 @@ impl FromRowField {
     /// By default this is `T: for<'a> postgres::types::FromSql<'a>`,
     /// when using `flatten` it's: `T: postgres_from_row::FromRow`
     /// and when using either `from` or `try_from` attributes it additionally pushes this bound:
-    /// `T: core::convert::From<R>`, where `T` is the type specified in the struct and `R` is the
+    /// `T: std::convert::From<R>`, where `T` is the type specified in the struct and `R` is the
     /// type specified in the `[try]_from` attribute.
     fn add_predicates(&self, predicates: &mut Vec<TokenStream2>) -> Result<()> {
         let target_ty = &self.target_ty()?;
         let ty = &self.ty;
 
         predicates.push(if self.flatten {
-            quote! (#target_ty: FromRow)
+            quote! (#target_ty: ::tokio_postgres::FromRow)
         } else {
-            quote! (#target_ty: for<'a> tokio_postgres::types::FromSql<'a>)
+            quote! (#target_ty: for<'a> ::tokio_postgres::types::FromSql<'a>)
         });
 
         if self.from.is_some() {
-            predicates.push(quote!(#ty: core::convert::From<#target_ty>))
+            predicates.push(quote!(#ty: ::std::convert::From<#target_ty>))
         } else if self.try_from.is_some() {
-            let try_from = quote!(core::convert::TryFrom<#target_ty>);
+            let try_from = quote!(::std::convert::TryFrom<#target_ty>);
 
             predicates.push(quote!(#ty: #try_from));
             predicates.push(
-                quote!(tokio_postgres::Error: core::convert::From<<#ty as #try_from>::Error>),
+                quote!(::tokio_postgres::Error: ::std::convert::From<<#ty as #try_from>::Error>),
             );
-            predicates.push(quote!(<#ty as #try_from>::Error: core::fmt::Debug));
+            predicates.push(quote!(<#ty as #try_from>::Error: ::std::fmt::Debug));
         }
 
         Ok(())
@@ -188,15 +188,15 @@ impl FromRowField {
         let target_ty = self.target_ty()?;
 
         let mut base = if self.flatten {
-            quote!(<#target_ty as tokio_postgres::FromRow>::from_row(row)?)
+            quote!(<#target_ty as ::tokio_postgres::FromRow>::from_row(row)?)
         } else {
-            quote!(tokio_postgres::Row::try_get::<&str, #target_ty>(row, #column_name)?)
+            quote!(::tokio_postgres::Row::try_get::<&str, #target_ty>(row, #column_name)?)
         };
 
         if self.from.is_some() {
-            base = quote!(<#field_ty as core::convert::From<#target_ty>>::from(#base));
+            base = quote!(<#field_ty as ::std::convert::From<#target_ty>>::from(#base));
         } else if self.try_from.is_some() {
-            base = quote!(<#field_ty as core::convert::TryFrom<#target_ty>>::try_from(#base)?);
+            base = quote!(<#field_ty as ::std::convert::TryFrom<#target_ty>>::try_from(#base)?);
         };
 
         Ok(quote!(#ident: #base))

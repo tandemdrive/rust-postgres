@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::net::IpAddr;
-use std::result;
 use std::str::FromStr;
 use std::time::{Duration, UNIX_EPOCH};
 use tokio_postgres::types::{FromSql, FromSqlOwned, IsNull, Kind, PgLsn, ToSql, Type, WrongType};
@@ -492,7 +491,7 @@ async fn domain() {
             &self,
             ty: &Type,
             out: &mut BytesMut,
-        ) -> result::Result<IsNull, Box<dyn Error + Sync + Send>> {
+        ) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
             let inner = match *ty.kind() {
                 Kind::Domain(ref inner) => inner,
                 _ => unreachable!(),
@@ -508,7 +507,7 @@ async fn domain() {
     }
 
     impl<'a> FromSql<'a> for SessionId {
-        fn from_sql(ty: &Type, raw: &[u8]) -> result::Result<Self, Box<dyn Error + Sync + Send>> {
+        fn from_sql(ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
             Vec::<u8>::from_sql(ty, raw).map(SessionId)
         }
 

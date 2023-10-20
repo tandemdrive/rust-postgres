@@ -121,7 +121,7 @@ impl<'a> FromSql<'a> for NaiveDate {
 impl ToSql for NaiveDate {
     fn to_sql(&self, _: &Type, w: &mut BytesMut) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
         let jd = self.signed_duration_since(base().date()).num_days();
-        if jd > i64::from(i32::max_value()) || jd < i64::from(i32::min_value()) {
+        if jd > (i32::MAX as i64) || jd < (i32::MIN as i64) {
             return Err("value too large to transmit".into());
         }
 
