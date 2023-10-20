@@ -6,6 +6,7 @@ use heck::{
     ToUpperCamelCase,
 };
 
+#[allow(clippy::enum_glob_use)]
 use self::RenameRule::*;
 
 /// The different possible ways to change case of fields in a struct, or variants in an enum.

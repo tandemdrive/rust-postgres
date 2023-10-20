@@ -155,6 +155,7 @@ where
             let mut stream = SslStream::new(ssl, stream)?;
             match Pin::new(&mut stream).connect().await {
                 Ok(()) => Ok(TlsStream(stream)),
+                #[allow(trivial_casts)]
                 Err(error) => Err(Box::new(ConnectError {
                     error,
                     verify_result: stream.ssl().verify_result(),

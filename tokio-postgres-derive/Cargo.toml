@@ -3,7 +3,7 @@ name = "tokio-postgres-derive"
 version = "0.0.0"
 authors = ["tandemdrive"]
 license = "MIT/Apache-2.0"
-edition = "2018"
+edition = "2021"
 description = "Internal proc-macro crate for tokio-postgres"
 repository = "https://github.com/sfackler/rust-postgres"
 

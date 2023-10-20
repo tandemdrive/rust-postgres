@@ -603,10 +603,11 @@ impl Client {
                     frontend::query("ROLLBACK", buf).unwrap();
                     buf.split().freeze()
                 });
-                let _ = self
-                    .client
-                    .inner()
-                    .send(RequestMessages::Single(FrontendMessage::Raw(buf)));
+                drop(
+                    self.client
+                        .inner()
+                        .send(RequestMessages::Single(FrontendMessage::Raw(buf))),
+                );
             }
         }
 

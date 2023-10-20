@@ -15,7 +15,11 @@ impl<T> LazyPin<T> {
 
     pub fn pinned(&mut self) -> Pin<&mut T> {
         self.pinned = true;
-        unsafe { Pin::new_unchecked(&mut *self.value) }
+        // SAFETY: we have the .pinned boolean to check we are pinned
+        #[allow(unsafe_code)]
+        unsafe {
+            Pin::new_unchecked(&mut *self.value)
+        }
     }
 
     pub fn into_unpinned(self) -> Option<T> {

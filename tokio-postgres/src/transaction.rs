@@ -50,10 +50,11 @@ impl<'a> Drop for Transaction<'a> {
             frontend::query(&query, buf).unwrap();
             buf.split().freeze()
         });
-        let _ = self
-            .client
-            .inner()
-            .send(RequestMessages::Single(FrontendMessage::Raw(buf)));
+        drop(
+            self.client
+                .inner()
+                .send(RequestMessages::Single(FrontendMessage::Raw(buf))),
+        );
     }
 }
 
