@@ -2,6 +2,7 @@
 name = "codegen"
 version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
+edition.workspace = true
 
 [dependencies]
 phf_codegen = "0.11"

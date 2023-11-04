@@ -14,5 +14,8 @@ members = [
 ]
 resolver = "2"
 
+[workspace.package]
+edition = "2018"
+
 [profile.release]
 debug = 2
