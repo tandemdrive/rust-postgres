@@ -128,5 +128,5 @@ fn url() {
             .host_path("/var/lib/postgresql")
             .port(5432)
             .dbname("dbname"),
-    )
+    );
 }

@@ -318,15 +318,13 @@ async fn simple_query() {
         .await
         .unwrap();
 
-    match messages[0] {
-        SimpleQueryMessage::CommandComplete(0) => {}
-        _ => panic!("unexpected message"),
-    }
-    match messages[1] {
-        SimpleQueryMessage::CommandComplete(2) => {}
-        _ => panic!("unexpected message"),
-    }
-    match &messages[2] {
+    let [SimpleQueryMessage::CommandComplete(0), SimpleQueryMessage::CommandComplete(2), ref third, ref forth, SimpleQueryMessage::CommandComplete(2)] =
+        messages[..]
+    else {
+        panic!("unexpected message")
+    };
+
+    match third {
         SimpleQueryMessage::Row(row) => {
             assert_eq!(row.columns().get(0).map(|c| c.name()), Some("id"));
             assert_eq!(row.columns().get(1).map(|c| c.name()), Some("name"));
@@ -335,17 +333,13 @@ async fn simple_query() {
         }
         _ => panic!("unexpected message"),
     }
-    match &messages[3] {
+    match forth {
         SimpleQueryMessage::Row(row) => {
             assert_eq!(row.columns().get(0).map(|c| c.name()), Some("id"));
             assert_eq!(row.columns().get(1).map(|c| c.name()), Some("name"));
             assert_eq!(row.get(0), Some("2"));
             assert_eq!(row.get(1), Some("joe"));
         }
-        _ => panic!("unexpected message"),
-    }
-    match messages[4] {
-        SimpleQueryMessage::CommandComplete(2) => {}
         _ => panic!("unexpected message"),
     }
     assert_eq!(messages.len(), 5);

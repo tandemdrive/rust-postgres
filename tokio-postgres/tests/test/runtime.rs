@@ -68,7 +68,7 @@ async fn target_session_attrs_err() {
 
 #[tokio::test]
 async fn host_only_ok() {
-    let _ = tokio_postgres::connect(
+    let _unused = tokio_postgres::connect(
         "host=localhost port=5433 user=pass_user dbname=postgres password=password",
         NoTls,
     )
@@ -78,7 +78,7 @@ async fn host_only_ok() {
 
 #[tokio::test]
 async fn hostaddr_only_ok() {
-    let _ = tokio_postgres::connect(
+    let _unused = tokio_postgres::connect(
         "hostaddr=127.0.0.1 port=5433 user=pass_user dbname=postgres password=password",
         NoTls,
     )
@@ -88,7 +88,7 @@ async fn hostaddr_only_ok() {
 
 #[tokio::test]
 async fn hostaddr_and_host_ok() {
-    let _ = tokio_postgres::connect(
+    let _unused = tokio_postgres::connect(
         "hostaddr=127.0.0.1 host=localhost port=5433 user=pass_user dbname=postgres password=password",
         NoTls,
     )
@@ -98,7 +98,7 @@ async fn hostaddr_and_host_ok() {
 
 #[tokio::test]
 async fn hostaddr_host_mismatch() {
-    let _ = tokio_postgres::connect(
+    let _unused = tokio_postgres::connect(
         "hostaddr=127.0.0.1,127.0.0.2 host=localhost port=5433 user=pass_user dbname=postgres password=password",
         NoTls,
     )
@@ -109,7 +109,7 @@ async fn hostaddr_host_mismatch() {
 
 #[tokio::test]
 async fn hostaddr_host_both_missing() {
-    let _ = tokio_postgres::connect(
+    let _unused = tokio_postgres::connect(
         "port=5433 user=pass_user dbname=postgres password=password",
         NoTls,
     )

@@ -50,7 +50,7 @@ impl DeriveFromRow {
 
         let mut predicates = Vec::new();
         for field in &self.fields {
-            field.push_predicates(&mut predicates)
+            field.push_predicates(&mut predicates);
         }
 
         let from_row_fields = self
@@ -132,13 +132,13 @@ impl FromRowField {
         let ty = &self.ty;
 
         if self.attrs.flatten {
-            predicates.push(quote! (#target_ty: ::tokio_postgres::FromRow))
+            predicates.push(quote! (#target_ty: ::tokio_postgres::FromRow));
         } else {
-            predicates.push(quote! (#target_ty: for<'a> ::tokio_postgres::types::FromSql<'a>))
+            predicates.push(quote! (#target_ty: for<'a> ::tokio_postgres::types::FromSql<'a>));
         };
 
         if self.attrs.from.is_some() {
-            predicates.push(quote!(#ty: std::convert::From<#target_ty>))
+            predicates.push(quote!(#ty: std::convert::From<#target_ty>));
         } else if self.attrs.try_from.is_some() {
             let try_from = quote!(::std::convert::TryFrom<#target_ty>);
 
@@ -200,16 +200,16 @@ impl FromRowFieldAttrs {
 
             attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("flatten") {
-                    this.flatten = true
+                    this.flatten = true;
                 } else if meta.path.is_ident("try_from") {
                     let lit: syn::LitStr = meta.value()?.parse()?;
-                    this.try_from = Some(lit.parse()?)
+                    this.try_from = Some(lit.parse()?);
                 } else if meta.path.is_ident("from") {
                     let lit: syn::LitStr = meta.value()?.parse()?;
-                    this.from = Some(lit.parse()?)
+                    this.from = Some(lit.parse()?);
                 } else if meta.path.is_ident("rename") {
                     let lit: syn::LitStr = meta.value()?.parse()?;
-                    this.rename = Some(lit.value())
+                    this.rename = Some(lit.value());
                 } else {
                     return Err(meta.error("unexpected `from_row` attribute."));
                 }

@@ -255,6 +255,12 @@ where
     v.to_sql(ty, out)
 }
 
+#[cfg(feature = "with-time-0_2")]
+extern crate time_02 as time;
+
+#[cfg(feature = "with-time-0_3")]
+extern crate time_03 as time;
+
 #[cfg(feature = "with-bit-vec-0_6")]
 mod bit_vec_06;
 #[cfg(feature = "with-chrono-0_4")]
@@ -281,10 +287,6 @@ mod time_03;
 mod uuid_08;
 #[cfg(feature = "with-uuid-1")]
 mod uuid_1;
-
-// The time::{date, time} macros produce compile errors if the crate package is renamed.
-#[cfg(feature = "with-time-0_2")]
-extern crate time_02 as time;
 
 mod pg_lsn;
 #[doc(hidden)]

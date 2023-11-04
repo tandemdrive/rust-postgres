@@ -5,7 +5,6 @@ use std::f32;
 use std::f64;
 use std::fmt;
 use std::net::IpAddr;
-use std::result;
 use std::str::FromStr;
 use std::time::{Duration, UNIX_EPOCH};
 use tokio_postgres::types::{FromSql, FromSqlOwned, IsNull, Kind, PgLsn, ToSql, Type, WrongType};
@@ -151,7 +150,7 @@ async fn test_lsn_params() {
             (None, "NULL"),
         ],
     )
-    .await
+    .await;
 }
 
 #[tokio::test]
@@ -372,11 +371,7 @@ async fn test_array_vec_params() {
 async fn test_array_array_params() {
     test_type("integer[]", &[(Some([1i32, 2i32]), "ARRAY[1,2]")]).await;
     test_type("text[]", &[(Some(["peter".to_string()]), "ARRAY['peter']")]).await;
-    test_type(
-        "integer[]",
-        &[(Some([] as [i32; 0]), "ARRAY[]"), (None, "NULL")],
-    )
-    .await;
+    test_type::<Option<[i32; 0]>, _>("integer[]", &[(Some([]), "ARRAY[]"), (None, "NULL")]).await;
 }
 
 #[allow(clippy::eq_op)]
@@ -492,7 +487,7 @@ async fn domain() {
             &self,
             ty: &Type,
             out: &mut BytesMut,
-        ) -> result::Result<IsNull, Box<dyn Error + Sync + Send>> {
+        ) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
             let inner = match *ty.kind() {
                 Kind::Domain(ref inner) => inner,
                 _ => unreachable!(),
@@ -508,7 +503,7 @@ async fn domain() {
     }
 
     impl<'a> FromSql<'a> for SessionId {
-        fn from_sql(ty: &Type, raw: &[u8]) -> result::Result<Self, Box<dyn Error + Sync + Send>> {
+        fn from_sql(ty: &Type, raw: &[u8]) -> Result<Self, Box<dyn Error + Sync + Send>> {
             Vec::<u8>::from_sql(ty, raw).map(SessionId)
         }
 

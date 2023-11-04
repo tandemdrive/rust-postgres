@@ -586,55 +586,18 @@ impl Inner {
 
     pub fn kind(&self) -> &Kind {
         match *self {
-            Inner::Bool => &Kind::Simple,
-            Inner::Bytea => &Kind::Simple,
-            Inner::Char => &Kind::Simple,
-            Inner::Name => &Kind::Simple,
-            Inner::Int8 => &Kind::Simple,
-            Inner::Int2 => &Kind::Simple,
-            Inner::Int2Vector => &Kind::Array(Type(Inner::Int2)),
-            Inner::Int4 => &Kind::Simple,
-            Inner::Regproc => &Kind::Simple,
-            Inner::Text => &Kind::Simple,
-            Inner::Oid => &Kind::Simple,
-            Inner::Tid => &Kind::Simple,
-            Inner::Xid => &Kind::Simple,
-            Inner::Cid => &Kind::Simple,
-            Inner::OidVector => &Kind::Array(Type(Inner::Oid)),
-            Inner::PgDdlCommand => &Kind::Pseudo,
-            Inner::Json => &Kind::Simple,
-            Inner::Xml => &Kind::Simple,
             Inner::XmlArray => &Kind::Array(Type(Inner::Xml)),
-            Inner::PgNodeTree => &Kind::Simple,
             Inner::JsonArray => &Kind::Array(Type(Inner::Json)),
-            Inner::TableAmHandler => &Kind::Pseudo,
             Inner::Xid8Array => &Kind::Array(Type(Inner::Xid8)),
-            Inner::IndexAmHandler => &Kind::Pseudo,
-            Inner::Point => &Kind::Simple,
-            Inner::Lseg => &Kind::Simple,
-            Inner::Path => &Kind::Simple,
-            Inner::Box => &Kind::Simple,
-            Inner::Polygon => &Kind::Simple,
-            Inner::Line => &Kind::Simple,
             Inner::LineArray => &Kind::Array(Type(Inner::Line)),
-            Inner::Cidr => &Kind::Simple,
             Inner::CidrArray => &Kind::Array(Type(Inner::Cidr)),
-            Inner::Float4 => &Kind::Simple,
-            Inner::Float8 => &Kind::Simple,
-            Inner::Unknown => &Kind::Simple,
-            Inner::Circle => &Kind::Simple,
             Inner::CircleArray => &Kind::Array(Type(Inner::Circle)),
-            Inner::Macaddr8 => &Kind::Simple,
             Inner::Macaddr8Array => &Kind::Array(Type(Inner::Macaddr8)),
-            Inner::Money => &Kind::Simple,
             Inner::MoneyArray => &Kind::Array(Type(Inner::Money)),
-            Inner::Macaddr => &Kind::Simple,
-            Inner::Inet => &Kind::Simple,
             Inner::BoolArray => &Kind::Array(Type(Inner::Bool)),
             Inner::ByteaArray => &Kind::Array(Type(Inner::Bytea)),
             Inner::CharArray => &Kind::Array(Type(Inner::Char)),
             Inner::NameArray => &Kind::Array(Type(Inner::Name)),
-            Inner::Int2Array => &Kind::Array(Type(Inner::Int2)),
             Inner::Int2VectorArray => &Kind::Array(Type(Inner::Int2Vector)),
             Inner::Int4Array => &Kind::Array(Type(Inner::Int4)),
             Inner::RegprocArray => &Kind::Array(Type(Inner::Regproc)),
@@ -653,80 +616,34 @@ impl Inner {
             Inner::Float4Array => &Kind::Array(Type(Inner::Float4)),
             Inner::Float8Array => &Kind::Array(Type(Inner::Float8)),
             Inner::PolygonArray => &Kind::Array(Type(Inner::Polygon)),
-            Inner::OidArray => &Kind::Array(Type(Inner::Oid)),
-            Inner::Aclitem => &Kind::Simple,
             Inner::AclitemArray => &Kind::Array(Type(Inner::Aclitem)),
             Inner::MacaddrArray => &Kind::Array(Type(Inner::Macaddr)),
             Inner::InetArray => &Kind::Array(Type(Inner::Inet)),
-            Inner::Bpchar => &Kind::Simple,
-            Inner::Varchar => &Kind::Simple,
-            Inner::Date => &Kind::Simple,
-            Inner::Time => &Kind::Simple,
-            Inner::Timestamp => &Kind::Simple,
             Inner::TimestampArray => &Kind::Array(Type(Inner::Timestamp)),
             Inner::DateArray => &Kind::Array(Type(Inner::Date)),
             Inner::TimeArray => &Kind::Array(Type(Inner::Time)),
-            Inner::Timestamptz => &Kind::Simple,
             Inner::TimestamptzArray => &Kind::Array(Type(Inner::Timestamptz)),
-            Inner::Interval => &Kind::Simple,
             Inner::IntervalArray => &Kind::Array(Type(Inner::Interval)),
             Inner::NumericArray => &Kind::Array(Type(Inner::Numeric)),
             Inner::CstringArray => &Kind::Array(Type(Inner::Cstring)),
-            Inner::Timetz => &Kind::Simple,
             Inner::TimetzArray => &Kind::Array(Type(Inner::Timetz)),
-            Inner::Bit => &Kind::Simple,
             Inner::BitArray => &Kind::Array(Type(Inner::Bit)),
-            Inner::Varbit => &Kind::Simple,
             Inner::VarbitArray => &Kind::Array(Type(Inner::Varbit)),
-            Inner::Numeric => &Kind::Simple,
-            Inner::Refcursor => &Kind::Simple,
             Inner::RefcursorArray => &Kind::Array(Type(Inner::Refcursor)),
-            Inner::Regprocedure => &Kind::Simple,
-            Inner::Regoper => &Kind::Simple,
-            Inner::Regoperator => &Kind::Simple,
-            Inner::Regclass => &Kind::Simple,
-            Inner::Regtype => &Kind::Simple,
             Inner::RegprocedureArray => &Kind::Array(Type(Inner::Regprocedure)),
             Inner::RegoperArray => &Kind::Array(Type(Inner::Regoper)),
             Inner::RegoperatorArray => &Kind::Array(Type(Inner::Regoperator)),
             Inner::RegclassArray => &Kind::Array(Type(Inner::Regclass)),
             Inner::RegtypeArray => &Kind::Array(Type(Inner::Regtype)),
-            Inner::Record => &Kind::Pseudo,
-            Inner::Cstring => &Kind::Pseudo,
-            Inner::Any => &Kind::Pseudo,
-            Inner::Anyarray => &Kind::Pseudo,
-            Inner::Void => &Kind::Pseudo,
-            Inner::Trigger => &Kind::Pseudo,
-            Inner::LanguageHandler => &Kind::Pseudo,
-            Inner::Internal => &Kind::Pseudo,
-            Inner::Anyelement => &Kind::Pseudo,
-            Inner::RecordArray => &Kind::Pseudo,
-            Inner::Anynonarray => &Kind::Pseudo,
             Inner::TxidSnapshotArray => &Kind::Array(Type(Inner::TxidSnapshot)),
-            Inner::Uuid => &Kind::Simple,
             Inner::UuidArray => &Kind::Array(Type(Inner::Uuid)),
-            Inner::TxidSnapshot => &Kind::Simple,
-            Inner::FdwHandler => &Kind::Pseudo,
-            Inner::PgLsn => &Kind::Simple,
             Inner::PgLsnArray => &Kind::Array(Type(Inner::PgLsn)),
-            Inner::TsmHandler => &Kind::Pseudo,
-            Inner::PgNdistinct => &Kind::Simple,
-            Inner::PgDependencies => &Kind::Simple,
-            Inner::Anyenum => &Kind::Pseudo,
-            Inner::TsVector => &Kind::Simple,
-            Inner::Tsquery => &Kind::Simple,
-            Inner::GtsVector => &Kind::Simple,
             Inner::TsVectorArray => &Kind::Array(Type(Inner::TsVector)),
             Inner::GtsVectorArray => &Kind::Array(Type(Inner::GtsVector)),
             Inner::TsqueryArray => &Kind::Array(Type(Inner::Tsquery)),
-            Inner::Regconfig => &Kind::Simple,
             Inner::RegconfigArray => &Kind::Array(Type(Inner::Regconfig)),
-            Inner::Regdictionary => &Kind::Simple,
             Inner::RegdictionaryArray => &Kind::Array(Type(Inner::Regdictionary)),
-            Inner::Jsonb => &Kind::Simple,
             Inner::JsonbArray => &Kind::Array(Type(Inner::Jsonb)),
-            Inner::AnyRange => &Kind::Pseudo,
-            Inner::EventTrigger => &Kind::Pseudo,
             Inner::Int4Range => &Kind::Range(Type(Inner::Int4)),
             Inner::Int4RangeArray => &Kind::Array(Type(Inner::Int4Range)),
             Inner::NumRange => &Kind::Range(Type(Inner::Numeric)),
@@ -739,13 +656,9 @@ impl Inner {
             Inner::DateRangeArray => &Kind::Array(Type(Inner::DateRange)),
             Inner::Int8Range => &Kind::Range(Type(Inner::Int8)),
             Inner::Int8RangeArray => &Kind::Array(Type(Inner::Int8Range)),
-            Inner::Jsonpath => &Kind::Simple,
             Inner::JsonpathArray => &Kind::Array(Type(Inner::Jsonpath)),
-            Inner::Regnamespace => &Kind::Simple,
             Inner::RegnamespaceArray => &Kind::Array(Type(Inner::Regnamespace)),
-            Inner::Regrole => &Kind::Simple,
             Inner::RegroleArray => &Kind::Array(Type(Inner::Regrole)),
-            Inner::Regcollation => &Kind::Simple,
             Inner::RegcollationArray => &Kind::Array(Type(Inner::Regcollation)),
             Inner::Int4multiRange => &Kind::Multirange(Type(Inner::Int4)),
             Inner::NummultiRange => &Kind::Multirange(Type(Inner::Numeric)),
@@ -753,18 +666,107 @@ impl Inner {
             Inner::TstzmultiRange => &Kind::Multirange(Type(Inner::Timestamptz)),
             Inner::DatemultiRange => &Kind::Multirange(Type(Inner::Date)),
             Inner::Int8multiRange => &Kind::Multirange(Type(Inner::Int8)),
-            Inner::AnymultiRange => &Kind::Pseudo,
-            Inner::AnycompatiblemultiRange => &Kind::Pseudo,
-            Inner::PgBrinBloomSummary => &Kind::Simple,
-            Inner::PgBrinMinmaxMultiSummary => &Kind::Simple,
-            Inner::PgMcvList => &Kind::Simple,
-            Inner::PgSnapshot => &Kind::Simple,
             Inner::PgSnapshotArray => &Kind::Array(Type(Inner::PgSnapshot)),
-            Inner::Xid8 => &Kind::Simple,
-            Inner::Anycompatible => &Kind::Pseudo,
-            Inner::Anycompatiblearray => &Kind::Pseudo,
-            Inner::Anycompatiblenonarray => &Kind::Pseudo,
-            Inner::AnycompatibleRange => &Kind::Pseudo,
+
+            Inner::OidVector | Inner::OidArray => &Kind::Array(Type(Inner::Oid)),
+            Inner::Int2Vector | Inner::Int2Array => &Kind::Array(Type(Inner::Int2)),
+
+            Inner::PgDdlCommand
+            | Inner::TableAmHandler
+            | Inner::IndexAmHandler
+            | Inner::FdwHandler
+            | Inner::TsmHandler
+            | Inner::Anyenum
+            | Inner::Bool
+            | Inner::Bytea
+            | Inner::Char
+            | Inner::Name
+            | Inner::Int8
+            | Inner::Int2
+            | Inner::Int4
+            | Inner::Regproc
+            | Inner::Text
+            | Inner::Oid
+            | Inner::Tid
+            | Inner::Xid
+            | Inner::Cid
+            | Inner::Json
+            | Inner::Xml
+            | Inner::PgNodeTree
+            | Inner::Point
+            | Inner::Lseg
+            | Inner::Path
+            | Inner::Box
+            | Inner::Polygon
+            | Inner::Line
+            | Inner::Cidr
+            | Inner::Float4
+            | Inner::Float8
+            | Inner::Unknown
+            | Inner::Circle
+            | Inner::Macaddr8
+            | Inner::Money
+            | Inner::Macaddr
+            | Inner::Inet
+            | Inner::Aclitem
+            | Inner::Bpchar
+            | Inner::Varchar
+            | Inner::Date
+            | Inner::Time
+            | Inner::Timestamp
+            | Inner::Timestamptz
+            | Inner::Interval
+            | Inner::Timetz
+            | Inner::Bit
+            | Inner::Varbit
+            | Inner::Numeric
+            | Inner::Refcursor
+            | Inner::Regprocedure
+            | Inner::Regoper
+            | Inner::Regoperator
+            | Inner::Regclass
+            | Inner::Regtype
+            | Inner::Uuid
+            | Inner::TxidSnapshot
+            | Inner::PgLsn
+            | Inner::PgNdistinct
+            | Inner::PgDependencies
+            | Inner::TsVector
+            | Inner::Tsquery
+            | Inner::GtsVector
+            | Inner::Regconfig
+            | Inner::Regdictionary
+            | Inner::Jsonb
+            | Inner::Jsonpath
+            | Inner::Regnamespace
+            | Inner::Regrole
+            | Inner::Regcollation
+            | Inner::PgBrinBloomSummary
+            | Inner::PgBrinMinmaxMultiSummary
+            | Inner::PgMcvList
+            | Inner::PgSnapshot
+            | Inner::Xid8 => &Kind::Simple,
+
+            Inner::AnyRange
+            | Inner::EventTrigger
+            | Inner::AnymultiRange
+            | Inner::Record
+            | Inner::Cstring
+            | Inner::Any
+            | Inner::Anyarray
+            | Inner::Void
+            | Inner::Trigger
+            | Inner::LanguageHandler
+            | Inner::Internal
+            | Inner::Anyelement
+            | Inner::RecordArray
+            | Inner::Anynonarray
+            | Inner::AnycompatiblemultiRange
+            | Inner::Anycompatible
+            | Inner::Anycompatiblearray
+            | Inner::Anycompatiblenonarray
+            | Inner::AnycompatibleRange => &Kind::Pseudo,
+
             Inner::Int4multiRangeArray => &Kind::Array(Type(Inner::Int4multiRange)),
             Inner::NummultiRangeArray => &Kind::Array(Type(Inner::NummultiRange)),
             Inner::TsmultiRangeArray => &Kind::Array(Type(Inner::TsmultiRange)),

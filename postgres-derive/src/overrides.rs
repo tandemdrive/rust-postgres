@@ -96,7 +96,9 @@ impl Overrides {
                             return Err(Error::new_spanned(path, "unknown override"));
                         }
                     }
-                    bad => return Err(Error::new_spanned(bad, "unknown attribute")),
+                    bad @ Meta::List(_) => {
+                        return Err(Error::new_spanned(bad, "unknown attribute"))
+                    }
                 }
             }
         }

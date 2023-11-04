@@ -603,7 +603,7 @@ impl Client {
                     frontend::query("ROLLBACK", buf).unwrap();
                     buf.split().freeze()
                 });
-                let _ = self
+                let _unused = self
                     .client
                     .inner()
                     .send(RequestMessages::Single(FrontendMessage::Raw(buf)));
@@ -691,7 +691,7 @@ impl Client {
 
     #[doc(hidden)]
     pub fn __private_api_close(&mut self) {
-        self.inner.sender.close_channel()
+        self.inner.sender.close_channel();
     }
 }
 

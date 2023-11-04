@@ -87,7 +87,7 @@ impl<'a> DatParser<'a> {
 
         loop {
             match self.it.peek() {
-                Some((_, 'a'..='z')) | Some((_, '_')) => {
+                Some((_, 'a'..='z' | '_')) => {
                     self.it.next();
                 }
                 Some((i, _)) => return self.s[start..*i].to_string(),
@@ -151,7 +151,7 @@ impl<'a> DatParser<'a> {
         loop {
             match self.it.peek() {
                 Some(&(_, '#')) => self.skip_to('\n'),
-                Some(&(_, '\n')) | Some(&(_, ' ')) | Some(&(_, '\t')) => {
+                Some(&(_, '\n') | &(_, ' ') | &(_, '\t')) => {
                     self.it.next();
                 }
                 _ => break,

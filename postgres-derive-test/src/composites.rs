@@ -295,6 +295,7 @@ fn generics() {
     }
 
     // doesn't make sense to implement derived FromSql on a type with borrows
+    #[allow(explicit_outlives_requirements)]
     #[derive(ToSql, Debug, PartialEq)]
     #[postgres(name = "InventoryItem")]
     struct InventoryItemRef<'a, T: 'a + Clone, U>
@@ -339,7 +340,7 @@ fn generics() {
             (item, "ROW('foobar', 100, 15.50)"),
             (item_null, "ROW('foobar', 100, NULL)"),
         ],
-        |t: &InventoryItemRef<i32, f64>, f: &InventoryItem<i32, f64>| {
+        |t: &InventoryItemRef<'_, i32, f64>, f: &InventoryItem<i32, f64>| {
             t.name == f.name.as_str()
                 && t.supplier_id == &f.supplier_id
                 && t.price == f.price.as_ref()

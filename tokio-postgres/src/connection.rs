@@ -145,7 +145,7 @@ where
 
             match response.sender.poll_ready(cx) {
                 Poll::Ready(Ok(())) => {
-                    let _ = response.sender.start_send(messages);
+                    let _unused = response.sender.start_send(messages);
                     if !request_complete {
                         self.responses.push_front(response);
                     }

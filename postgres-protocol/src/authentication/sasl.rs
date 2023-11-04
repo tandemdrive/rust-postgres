@@ -141,7 +141,7 @@ impl ScramSha256 {
             .map(|_| {
                 let mut v = rng.gen_range(0x21u8..0x7e);
                 if v == 0x2c {
-                    v = 0x7e
+                    v = 0x7e;
                 }
                 v as char
             })

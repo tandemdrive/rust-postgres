@@ -466,7 +466,7 @@ impl From<tokio_postgres::Config> for Config {
         Config {
             config,
             notice_callback: Arc::new(|notice| {
-                info!("{}: {}", notice.severity(), notice.message())
+                info!("{}: {}", notice.severity(), notice.message());
             }),
         }
     }

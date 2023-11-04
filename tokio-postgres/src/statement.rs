@@ -23,7 +23,7 @@ impl Drop for StatementInner {
                 frontend::sync(buf);
                 buf.split().freeze()
             });
-            let _ = client.send(RequestMessages::Single(FrontendMessage::Raw(buf)));
+            let _unused = client.send(RequestMessages::Single(FrontendMessage::Raw(buf)));
         }
     }
 }

@@ -17,7 +17,7 @@ pub struct Client {
 
 impl Drop for Client {
     fn drop(&mut self) {
-        let _ = self.close_inner();
+        let _unused = self.close_inner();
     }
 }
 

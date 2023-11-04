@@ -18,16 +18,15 @@ impl Field {
         let ident = raw.ident.as_ref().unwrap().clone();
 
         // field level name override takes precendence over container level rename_all override
-        let name = match overrides.name {
-            Some(n) => n,
-            None => {
-                let name = ident.to_string();
-                let stripped = name.strip_prefix("r#").map(String::from).unwrap_or(name);
+        let name = if let Some(n) = overrides.name {
+            n
+        } else {
+            let name = ident.to_string();
+            let stripped = name.strip_prefix("r#").map(String::from).unwrap_or(name);
 
-                match rename_all {
-                    Some(rule) => rule.apply_to_field(&stripped),
-                    None => stripped,
-                }
+            match rename_all {
+                Some(rule) => rule.apply_to_field(&stripped),
+                None => stripped,
             }
         };
 
@@ -42,7 +41,7 @@ impl Field {
 pub(crate) fn append_generic_bound(mut generics: Generics, bound: &TypeParamBound) -> Generics {
     for param in &mut generics.params {
         if let GenericParam::Type(param) = param {
-            param.bounds.push(bound.to_owned())
+            param.bounds.push(bound.clone());
         }
     }
     generics

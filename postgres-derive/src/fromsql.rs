@@ -237,10 +237,10 @@ fn build_generics(source: &Generics) -> (Generics, Lifetime) {
     // don't worry about lifetime name collisions, it doesn't make sense to derive FromSql on a struct with a lifetime
     let lifetime = Lifetime::new("'a", Span::call_site());
 
-    let mut out = append_generic_bound(source.to_owned(), &new_fromsql_bound(&lifetime));
+    let mut out = append_generic_bound(source.clone(), &new_fromsql_bound(&lifetime));
     out.params.insert(
         0,
-        GenericParam::Lifetime(LifetimeParam::new(lifetime.to_owned())),
+        GenericParam::Lifetime(LifetimeParam::new(lifetime.clone())),
     );
 
     (out, lifetime)
@@ -249,7 +249,7 @@ fn build_generics(source: &Generics) -> (Generics, Lifetime) {
 fn new_fromsql_bound(lifetime: &Lifetime) -> TypeParamBound {
     let mut path_segment: PathSegment = Ident::new("FromSql", Span::call_site()).into();
     let mut seg_args = Punctuated::new();
-    seg_args.push(GenericArgument::Lifetime(lifetime.to_owned()));
+    seg_args.push(GenericArgument::Lifetime(lifetime.clone()));
     path_segment.arguments = PathArguments::AngleBracketed(AngleBracketedGenericArguments {
         colon2_token: None,
         lt_token: token::Lt::default(),

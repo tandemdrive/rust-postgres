@@ -33,7 +33,7 @@ async fn query_all_as() {
     assert_eq!(users.len(), 1);
     let user = users.get(0).unwrap();
     assert_eq!(user.name, "steven");
-    assert_eq!(user.age, 18)
+    assert_eq!(user.age, 18);
 }
 
 async fn connect(s: &str) -> Client {

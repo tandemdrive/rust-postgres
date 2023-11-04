@@ -15,7 +15,6 @@ use std::borrow::Cow;
 #[cfg(unix)]
 use std::ffi::OsStr;
 use std::net::IpAddr;
-use std::ops::Deref;
 #[cfg(unix)]
 use std::os::unix::ffi::OsStrExt;
 #[cfg(unix)]
@@ -347,7 +346,7 @@ impl Config {
 
     /// Gets the hostaddrs that have been added to the configuration with `hostaddr`.
     pub fn get_hostaddrs(&self) -> &[IpAddr] {
-        self.hostaddr.deref()
+        &self.hostaddr
     }
 
     /// Adds a Unix socket host to the configuration.
@@ -1107,6 +1106,7 @@ impl<'a> UrlParser<'a> {
         self.config.param("host", &s)
     }
 
+    #[allow(clippy::unused_self)]
     fn decode(&self, s: &'a str) -> Result<Cow<'a, str>, Error> {
         percent_encoding::percent_decode(s.as_bytes())
             .decode_utf8()

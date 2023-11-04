@@ -158,7 +158,8 @@ where
                 Err(error) => Err(Box::new(ConnectError {
                     error,
                     verify_result: stream.ssl().verify_result(),
-                }) as _),
+                })
+                .into()),
             }
         };
 

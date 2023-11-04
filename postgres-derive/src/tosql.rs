@@ -109,7 +109,7 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<TokenStream, Error> {
     };
 
     let ident = &input.ident;
-    let generics = append_generic_bound(input.generics.to_owned(), &new_tosql_bound());
+    let generics = append_generic_bound(input.generics.clone(), &new_tosql_bound());
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let out = quote! {
         impl#impl_generics postgres_types::ToSql for #ident#ty_generics #where_clause {

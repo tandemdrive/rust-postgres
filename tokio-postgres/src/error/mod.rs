@@ -385,7 +385,7 @@ impl fmt::Display for Error {
             Kind::FromSql(idx) => write!(fmt, "error deserializing column {}", idx)?,
             Kind::Column(column) => write!(fmt, "invalid column `{}`", column)?,
             Kind::Parameters(real, expected) => {
-                write!(fmt, "expected {expected} parameters but got {real}")?
+                write!(fmt, "expected {expected} parameters but got {real}")?;
             }
             Kind::Closed => fmt.write_str("connection closed")?,
             Kind::Db => fmt.write_str("db error")?,
@@ -408,7 +408,10 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        self.0.cause.as_ref().map(|e| &**e as _)
+        self.0
+            .cause
+            .as_deref()
+            .map::<&(dyn error::Error + 'static), _>(|e| e)
     }
 }
 

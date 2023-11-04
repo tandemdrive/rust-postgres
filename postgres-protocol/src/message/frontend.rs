@@ -6,7 +6,6 @@ use bytes::{Buf, BufMut, BytesMut};
 use std::convert::TryFrom;
 use std::error::Error;
 use std::io;
-use std::marker;
 
 use crate::{write_nullable, FromUsize, IsNull, Oid};
 
@@ -27,13 +26,13 @@ where
 }
 
 pub enum BindError {
-    Conversion(Box<dyn Error + marker::Sync + Send>),
+    Conversion(Box<dyn Error + Sync + Send>),
     Serialization(io::Error),
 }
 
-impl From<Box<dyn Error + marker::Sync + Send>> for BindError {
+impl From<Box<dyn Error + Sync + Send>> for BindError {
     #[inline]
-    fn from(e: Box<dyn Error + marker::Sync + Send>) -> BindError {
+    fn from(e: Box<dyn Error + Sync + Send>) -> BindError {
         BindError::Conversion(e)
     }
 }
@@ -58,7 +57,7 @@ pub fn bind<I, J, F, T, K>(
 where
     I: IntoIterator<Item = i16>,
     J: IntoIterator<Item = T>,
-    F: FnMut(T, &mut BytesMut) -> Result<IsNull, Box<dyn Error + marker::Sync + Send>>,
+    F: FnMut(T, &mut BytesMut) -> Result<IsNull, Box<dyn Error + Sync + Send>>,
     K: IntoIterator<Item = i16>,
 {
     buf.put_u8(b'B');

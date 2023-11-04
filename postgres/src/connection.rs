@@ -71,7 +71,7 @@ impl Connection {
                             notifications.push_back(notification);
                         }
                         Poll::Ready(Some(Ok(AsyncMessage::Notice(notice)))) => {
-                            notice_callback(notice)
+                            notice_callback(notice);
                         }
                         Poll::Ready(Some(Ok(_))) => {}
                         Poll::Ready(Some(Err(e))) => return Poll::Ready(Err(e)),

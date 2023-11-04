@@ -181,10 +181,12 @@ where
         Some(Message::AuthenticationSasl(body)) => {
             authenticate_sasl(stream, body, config).await?;
         }
-        Some(Message::AuthenticationKerberosV5)
-        | Some(Message::AuthenticationScmCredential)
-        | Some(Message::AuthenticationGss)
-        | Some(Message::AuthenticationSspi) => {
+        Some(
+            Message::AuthenticationKerberosV5
+            | Message::AuthenticationScmCredential
+            | Message::AuthenticationGss
+            | Message::AuthenticationSspi,
+        ) => {
             return Err(Error::authentication(
                 "unsupported authentication method".into(),
             ))
@@ -344,7 +346,7 @@ where
                 );
             }
             Some(msg @ Message::NoticeResponse(_)) => {
-                stream.delayed.push_back(BackendMessage::Async(msg))
+                stream.delayed.push_back(BackendMessage::Async(msg));
             }
             Some(Message::ReadyForQuery(_)) => return Ok((process_id, secret_key, parameters)),
             Some(Message::ErrorResponse(body)) => return Err(Error::db(body)),
