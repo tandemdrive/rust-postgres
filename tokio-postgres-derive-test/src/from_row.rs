@@ -5,10 +5,25 @@ use tokio_postgres::{Client, NoTls};
 
 #[tokio::test]
 async fn query_all_as() {
+    #[derive(Debug, PartialEq)]
+    struct Age(i32);
+
+    #[derive(Debug, PartialEq, Default)]
+    struct NonSqlType;
+
+    impl From<i32> for Age {
+        fn from(value: i32) -> Self {
+            Self(value)
+        }
+    }
+
     #[derive(FromRow)]
-    struct Person {
+    struct Person<A, S> {
         name: String,
-        age: i32,
+        #[from_row(from = "i32")]
+        age: A,
+        #[from_row(skip)]
+        skip_this_column: S,
     }
 
     let client = connect("user=postgres host=localhost port=5433").await;
@@ -25,7 +40,7 @@ async fn query_all_as() {
         .await
         .unwrap();
 
-    let users: Vec<Person> = client
+    let users: Vec<Person<Age, NonSqlType>> = client
         .query_as("SELECT name, age FROM person", &[])
         .await
         .unwrap();
@@ -33,7 +48,8 @@ async fn query_all_as() {
     assert_eq!(users.len(), 1);
     let user = users.get(0).unwrap();
     assert_eq!(user.name, "steven");
-    assert_eq!(user.age, 18)
+    assert_eq!(user.age, Age(18));
+    assert_eq!(user.skip_this_column, NonSqlType);
 }
 
 async fn connect(s: &str) -> Client {
