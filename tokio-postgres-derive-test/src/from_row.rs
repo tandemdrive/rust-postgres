@@ -120,7 +120,7 @@ async fn query_all_as_skip() {
     impl std::default::Default for NoFromSql {
         fn default() -> Self {
             Self {
-                message: "not from sql",
+                message: "no from sql",
             }
         }
     }
