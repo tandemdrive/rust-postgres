@@ -46,7 +46,7 @@ async fn query_all_as() {
         .unwrap();
 
     assert_eq!(users.len(), 1);
-    let user = users.get(0).unwrap();
+    let user = users.first().unwrap();
     assert_eq!(user.name, "steven");
     assert_eq!(user.age, Age(18));
     assert_eq!(user.skip_this_column, NonSqlType);
