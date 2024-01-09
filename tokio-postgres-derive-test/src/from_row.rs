@@ -3,29 +3,15 @@ use futures_util::FutureExt;
 use tokio_postgres::FromRow;
 use tokio_postgres::{Client, NoTls};
 
-#[tokio::test]
-async fn query_all_as() {
-    #[derive(Debug, PartialEq)]
-    struct Age(i32);
+async fn connect(s: &str) -> Client {
+    let (client, connection) = tokio_postgres::connect(s, NoTls).await.unwrap();
+    let connection = connection.map(|e| e.unwrap());
+    tokio::spawn(connection);
 
-    #[derive(Debug, PartialEq, Default)]
-    struct NonSqlType;
+    client
+}
 
-    impl From<i32> for Age {
-        fn from(value: i32) -> Self {
-            Self(value)
-        }
-    }
-
-    #[derive(FromRow)]
-    struct Person<A, S> {
-        name: String,
-        #[from_row(from = "i32")]
-        age: A,
-        #[from_row(skip)]
-        skip_this_column: S,
-    }
-
+async fn query_row<T: FromRow>() -> Result<Vec<T>, tokio_postgres::Error> {
     let client = connect("user=postgres host=localhost port=5433").await;
     client
         .batch_execute(
@@ -40,22 +26,118 @@ async fn query_all_as() {
         .await
         .unwrap();
 
-    let users: Vec<Person<Age, NonSqlType>> = client
-        .query_as("SELECT name, age FROM person", &[])
+    client
+        .query_as::<T>("SELECT name, age FROM person", &[])
         .await
-        .unwrap();
+}
+
+#[tokio::test]
+async fn query_all_as() {
+    #[derive(FromRow)]
+    struct Person {
+        name: String,
+        age: i32,
+    }
+
+    let users = query_row::<Person>().await.unwrap();
+
+    assert_eq!(users.len(), 1);
+    let user = users.first().unwrap();
+    assert_eq!(user.name, "steven");
+    assert_eq!(user.age, 18);
+}
+
+#[tokio::test]
+async fn query_all_as_generic() {
+    #[derive(FromRow)]
+    struct Person<A> {
+        name: String,
+        age: A,
+    }
+
+    let users = query_row::<Person<i32>>().await.unwrap();
+
+    assert_eq!(users.len(), 1);
+    let user = users.first().unwrap();
+    assert_eq!(user.name, "steven");
+    assert_eq!(user.age, 18);
+}
+
+#[tokio::test]
+async fn query_all_as_from() {
+    #[derive(Debug, PartialEq)]
+    struct Age(i32);
+
+    impl From<i32> for Age {
+        fn from(value: i32) -> Self {
+            Self(value)
+        }
+    }
+
+    #[derive(FromRow)]
+    struct Person {
+        name: String,
+        #[from_row(from = "i32")]
+        age: Age,
+    }
+
+    let users = query_row::<Person>().await.unwrap();
 
     assert_eq!(users.len(), 1);
     let user = users.first().unwrap();
     assert_eq!(user.name, "steven");
     assert_eq!(user.age, Age(18));
-    assert_eq!(user.skip_this_column, NonSqlType);
 }
 
-async fn connect(s: &str) -> Client {
-    let (client, connection) = tokio_postgres::connect(s, NoTls).await.unwrap();
-    let connection = connection.map(|e| e.unwrap());
-    tokio::spawn(connection);
+#[tokio::test]
+async fn query_all_as_flatten() {
+    #[derive(FromRow)]
+    struct AgeDetails {
+        age: i32,
+    }
 
-    client
+    #[derive(FromRow)]
+    struct Person {
+        name: String,
+        #[from_row(flatten)]
+        age_details: AgeDetails,
+    }
+
+    let users = query_row::<Person>().await.unwrap();
+
+    assert_eq!(users.len(), 1);
+    let user = users.first().unwrap();
+    assert_eq!(user.name, "steven");
+    assert_eq!(user.age_details.age, 18);
+}
+
+#[tokio::test]
+async fn query_all_as_skip() {
+    struct NoFromSql {
+        message: &'static str,
+    }
+
+    impl std::default::Default for NoFromSql {
+        fn default() -> Self {
+            Self {
+                message: "not from sql",
+            }
+        }
+    }
+
+    #[derive(FromRow)]
+    struct Person {
+        name: String,
+        age: i32,
+        #[from_row(skip)]
+        no_from_sql: NoFromSql,
+    }
+
+    let users = query_row::<Person>().await.unwrap();
+
+    assert_eq!(users.len(), 1);
+    let user = users.first().unwrap();
+    assert_eq!(user.name, "steven");
+    assert_eq!(user.age, 18);
+    assert_eq!(user.no_from_sql.message, "no from sql");
 }
