@@ -7,6 +7,7 @@ use std::sync::{Arc, Weak};
 
 struct StatementInner {
     client: Weak<InnerClient>,
+    query: String,
     name: String,
     params: Vec<Type>,
     columns: Vec<Column>,
@@ -34,12 +35,14 @@ pub struct Statement(Arc<StatementInner>);
 impl Statement {
     pub(crate) fn new(
         inner: &Arc<InnerClient>,
+        query: String,
         name: String,
         params: Vec<Type>,
         columns: Vec<Column>,
     ) -> Statement {
         Statement(Arc::new(StatementInner {
             client: Arc::downgrade(inner),
+            query,
             name,
             params,
             columns,
@@ -58,6 +61,11 @@ impl Statement {
     /// Returns information about the columns returned when the statement is queried.
     pub fn columns(&self) -> &[Column] {
         &self.0.columns
+    }
+
+    /// Returns the source query used to construct this statement.
+    pub fn query(&self) -> &str {
+        &self.0.query
     }
 }
 

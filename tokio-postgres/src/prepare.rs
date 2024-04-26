@@ -105,7 +105,13 @@ pub async fn prepare(
         }
     }
 
-    Ok(Statement::new(client, name, parameters, columns))
+    Ok(Statement::new(
+        client,
+        query.to_string(),
+        name,
+        parameters,
+        columns,
+    ))
 }
 
 fn prepare_rec<'a>(

@@ -1,21 +1,23 @@
-use crate::to_statement::private::{Sealed, ToStatementType};
+use crate::to_statement::private::Sealed;
 use crate::Statement;
 
-mod private {
+pub(crate) use private::StatementType;
+
+pub(crate) mod private {
     use crate::{Client, Error, Statement};
 
     pub trait Sealed {}
 
-    pub enum ToStatementType<'a> {
+    pub enum StatementType<'a> {
         Statement(&'a Statement),
         Query(&'a str),
     }
 
-    impl<'a> ToStatementType<'a> {
+    impl<'a> StatementType<'a> {
         pub async fn into_statement(self, client: &Client) -> Result<Statement, Error> {
             match self {
-                ToStatementType::Statement(s) => Ok(s.clone()),
-                ToStatementType::Query(s) => client.prepare(s).await,
+                StatementType::Statement(s) => Ok(s.clone()),
+                StatementType::Query(s) => client.prepare(s).await,
             }
         }
     }
@@ -29,28 +31,28 @@ mod private {
 /// This trait is "sealed" and cannot be implemented by anything outside this crate.
 pub trait ToStatement: Sealed {
     #[doc(hidden)]
-    fn __convert(&self) -> ToStatementType<'_>;
+    fn __convert(&self) -> StatementType<'_>;
 }
 
 impl ToStatement for Statement {
-    fn __convert(&self) -> ToStatementType<'_> {
-        ToStatementType::Statement(self)
+    fn __convert(&self) -> StatementType<'_> {
+        StatementType::Statement(self)
     }
 }
 
 impl Sealed for Statement {}
 
 impl ToStatement for str {
-    fn __convert(&self) -> ToStatementType<'_> {
-        ToStatementType::Query(self)
+    fn __convert(&self) -> StatementType<'_> {
+        StatementType::Query(self)
     }
 }
 
 impl Sealed for str {}
 
 impl ToStatement for String {
-    fn __convert(&self) -> ToStatementType<'_> {
-        ToStatementType::Query(self)
+    fn __convert(&self) -> StatementType<'_> {
+        StatementType::Query(self)
     }
 }
 

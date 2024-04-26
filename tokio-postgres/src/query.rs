@@ -1,6 +1,7 @@
 use crate::client::{InnerClient, Responses};
 use crate::codec::FrontendMessage;
 use crate::connection::RequestMessages;
+use crate::error::WithQuery;
 use crate::types::{BorrowToSql, IsNull};
 use crate::{Error, Portal, Row, Statement};
 use bytes::{Bytes, BytesMut};
@@ -44,11 +45,13 @@ where
             statement.name(),
             BorrowToSqlParamsDebug(params.as_slice()),
         );
-        encode(client, &statement, params)?
+        encode(client, &statement, params).with_query(|| statement.query().to_string())?
     } else {
-        encode(client, &statement, params)?
+        encode(client, &statement, params).with_query(|| statement.query().to_string())?
     };
-    let responses = start(client, buf).await?;
+    let responses = start(client, buf)
+        .await
+        .with_query(|| statement.query().to_string())?;
     Ok(RowStream {
         statement,
         responses,
@@ -213,6 +216,12 @@ pin_project! {
     }
 }
 
+impl RowStream {
+    pub(crate) fn statement(&self) -> &Statement {
+        &self.statement
+    }
+}
+
 impl Stream for RowStream {
     type Item = Result<Row, Error>;
 
@@ -224,11 +233,19 @@ impl Stream for RowStream {
                     return Poll::Ready(Some(Ok(Row::new(this.statement.clone(), body)?)))
                 }
                 Message::CommandComplete(body) => {
-                    *this.rows_affected = Some(extract_row_affected(&body)?);
+                    *this.rows_affected = Some(
+                        extract_row_affected(&body)
+                            .with_query(|| this.statement.query().to_string())?,
+                    );
                 }
                 Message::EmptyQueryResponse | Message::PortalSuspended => {}
                 Message::ReadyForQuery(_) => return Poll::Ready(None),
-                _ => return Poll::Ready(Some(Err(Error::unexpected_message()))),
+                _ => {
+                    return Poll::Ready(Some(
+                        Err(Error::unexpected_message())
+                            .with_query(|| this.statement.query().to_string()),
+                    ))
+                }
             }
         }
     }

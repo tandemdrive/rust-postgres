@@ -1,5 +1,6 @@
 //! Rows.
 
+use crate::error::WithQuery;
 use crate::row::sealed::{AsName, Sealed};
 use crate::simple_query::SimpleColumn;
 use crate::statement::Column;
@@ -111,7 +112,11 @@ impl fmt::Debug for Row {
 
 impl Row {
     pub(crate) fn new(statement: Statement, body: DataRowBody) -> Result<Row, Error> {
-        let ranges = body.ranges().collect().map_err(Error::parse)?;
+        let ranges = body
+            .ranges()
+            .collect()
+            .map_err(Error::parse)
+            .with_query(|| statement.query().to_string())?;
         Ok(Row {
             statement,
             body,

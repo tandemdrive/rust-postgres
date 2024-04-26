@@ -2,6 +2,7 @@ use crate::codec::{BackendMessages, FrontendMessage};
 use crate::config::SslMode;
 use crate::connection::{Request, RequestMessages};
 use crate::copy_out::CopyOutStream;
+use crate::error::WithQuery;
 use crate::from_row::FromRow;
 #[cfg(feature = "runtime")]
 use crate::keepalive::KeepaliveConfig;
@@ -232,7 +233,9 @@ impl Client {
         query: &str,
         parameter_types: &[Type],
     ) -> Result<Statement, Error> {
-        prepare::prepare(&self.inner, query, parameter_types).await
+        prepare::prepare(&self.inner, query, parameter_types)
+            .await
+            .with_query(|| query.to_string())
     }
 
     /// Executes a statement, returning a vector of the resulting rows.
@@ -258,22 +261,28 @@ impl Client {
     }
 
     /// Returns a vector of `T`s
-    pub async fn query_as<T: FromRow>(
+    pub async fn query_as<T, R: FromRow>(
         &self,
-        sql: &str,
+        statement: &T,
         params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<T>, Error> {
-        let rows = self.query(sql, params).await?;
+    ) -> Result<Vec<R>, Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        let rows = self.query(statement, params).await?;
         rows.iter().map(|x| FromRow::from_row(x)).collect()
     }
 
     /// Returns a vector of scalars
-    pub async fn query_scalar<T: FromSqlOwned>(
+    pub async fn query_scalar<T, R: FromSqlOwned>(
         &self,
-        sql: &str,
+        statement: &T,
         params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<T>, Error> {
-        let rows = self.query(sql, params).await?;
+    ) -> Result<Vec<R>, Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        let rows = self.query(statement, params).await?;
         rows.into_iter().map(|r| r.try_get(0)).collect()
     }
 
@@ -300,11 +309,14 @@ impl Client {
 
         let row = match stream.try_next().await? {
             Some(row) => row,
-            None => return Err(Error::row_count()),
+            None => {
+                return Err(Error::row_count())
+                    .with_query(|| stream.statement().query().to_string())
+            }
         };
 
         if stream.try_next().await?.is_some() {
-            return Err(Error::row_count());
+            return Err(Error::row_count()).with_query(|| stream.statement().query().to_string());
         }
 
         Ok(row)
@@ -418,7 +430,7 @@ impl Client {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn query_raw<T, P, I>(&self, statement: &T, params: I) -> Result<RowStream, Error>
+    pub async fn query_raw<'a, T, P, I>(&self, statement: &T, params: I) -> Result<RowStream, Error>
     where
         T: ?Sized + ToStatement,
         P: BorrowToSql,

@@ -361,6 +361,30 @@ enum Kind {
 struct ErrorInner {
     kind: Kind,
     cause: Option<Box<dyn error::Error + Sync + Send>>,
+    query: Option<String>,
+}
+
+/// Augment Error with query data
+pub trait WithQuery<T> {
+    /// Augment Error with query data
+    fn with_query<F>(self, f: F) -> Result<T, Error>
+    where
+        F: FnOnce() -> String;
+}
+
+impl<T> WithQuery<T> for Result<T, Error> {
+    fn with_query<F>(self, f: F) -> Result<T, Error>
+    where
+        F: FnOnce() -> String,
+    {
+        match self {
+            Ok(v) => Ok(v),
+            Err(mut err) => {
+                err.0.query = Some(f());
+                Err(err)
+            }
+        }
+    }
 }
 
 /// An error communicating with the Postgres server.
@@ -371,6 +395,7 @@ impl fmt::Debug for Error {
         fmt.debug_struct("Error")
             .field("kind", &self.0.kind)
             .field("cause", &self.0.cause)
+            .field("query", &self.0.query)
             .finish()
     }
 }
@@ -399,8 +424,11 @@ impl fmt::Display for Error {
             Kind::Connect => fmt.write_str("error connecting to server")?,
             Kind::Timeout => fmt.write_str("timeout waiting for server")?,
         };
-        if let Some(ref cause) = self.0.cause {
+        if let Some(cause) = self.0.cause.as_ref() {
             write!(fmt, ": {}", cause)?;
+        }
+        if let Some(query) = self.0.query.as_deref() {
+            write!(fmt, ", query: `{}`", query)?;
         }
         Ok(())
     }
@@ -438,7 +466,11 @@ impl Error {
     }
 
     fn new(kind: Kind, cause: Option<Box<dyn error::Error + Sync + Send>>) -> Error {
-        Error(Box::new(ErrorInner { kind, cause }))
+        Error(Box::new(ErrorInner {
+            kind,
+            cause,
+            query: None,
+        }))
     }
 
     pub(crate) fn closed() -> Error {

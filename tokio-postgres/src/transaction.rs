@@ -117,21 +117,27 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_as`]
-    pub async fn query_as<T: FromRow>(
+    pub async fn query_as<T, R: FromRow>(
         &self,
-        sql: &str,
+        statement: &T,
         params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<T>, Error> {
-        self.client.query_as(sql, params).await
+    ) -> Result<Vec<R>, Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        self.client.query_as(statement, params).await
     }
 
     /// Like [`Client::query_scalar`]
-    pub async fn query_scalar<T: FromSqlOwned>(
+    pub async fn query_scalar<T, R: FromSqlOwned>(
         &self,
-        sql: &str,
+        statement: &T,
         params: &[&(dyn ToSql + Sync)],
-    ) -> Result<Vec<T>, Error> {
-        self.client.query_scalar(sql, params).await
+    ) -> Result<Vec<R>, Error>
+    where
+        T: ?Sized + ToStatement,
+    {
+        self.client.query_scalar(statement, params).await
     }
 
     /// Like [`Client::query_one`]
