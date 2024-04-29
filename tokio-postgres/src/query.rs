@@ -124,6 +124,7 @@ where
 {
     let buf = if is_debug_logging_enabled() {
         let params = params.into_iter().collect::<Vec<_>>();
+        #[cfg(any(feature = "log", feature = "tracing"))]
         debug!(
             "executing statement {} with parameters: {:?}",
             statement.name(),
