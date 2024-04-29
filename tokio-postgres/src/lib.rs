@@ -142,8 +142,6 @@ pub use crate::to_statement::ToStatement;
 pub use crate::transaction::Transaction;
 pub use crate::transaction_builder::{IsolationLevel, TransactionBuilder};
 use crate::types::ToSql;
-use std::fmt;
-use tracing::instrument;
 
 pub mod binary_copy;
 mod bind;
@@ -191,13 +189,13 @@ pub mod types;
 ///
 /// [`Config`]: config/struct.Config.html
 #[cfg(feature = "runtime")]
-#[instrument]
+#[tracing::instrument]
 pub async fn connect<T>(
     config: &str,
     tls: T,
 ) -> Result<(Client, Connection<Socket, T::Stream>), Error>
 where
-    T: MakeTlsConnect<Socket> + fmt::Debug,
+    T: MakeTlsConnect<Socket> + std::fmt::Debug,
 {
     let config = config.parse::<Config>()?;
     config.connect(tls).await
