@@ -177,7 +177,7 @@ impl GenericClient for Transaction<'_> {
 
     async fn execute_raw<P, I, T>(&self, statement: &T, params: I) -> Result<u64, Error>
     where
-        T: ?Sized + ToStatement + Sync + Send + fmt::Debug + fmt::Debug,
+        T: ?Sized + ToStatement + Sync + Send + fmt::Debug,
         P: BorrowToSql,
         I: IntoIterator<Item = P> + Sync + Send,
         I::IntoIter: ExactSizeIterator,
@@ -187,7 +187,7 @@ impl GenericClient for Transaction<'_> {
 
     async fn query<T>(&self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, Error>
     where
-        T: ?Sized + ToStatement + Sync + Send + fmt::Debug + fmt::Debug,
+        T: ?Sized + ToStatement + Sync + Send + fmt::Debug,
     {
         self.query(query, params).await
     }
