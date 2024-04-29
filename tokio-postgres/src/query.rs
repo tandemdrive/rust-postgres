@@ -2,7 +2,7 @@ use crate::client::{InnerClient, Responses};
 use crate::codec::FrontendMessage;
 use crate::connection::RequestMessages;
 use crate::types::{BorrowToSql, IsNull};
-use crate::{Error, Portal, Row, Statement};
+use crate::{debug, Error, Portal, Row, Statement};
 use bytes::{Bytes, BytesMut};
 use futures_util::{ready, Stream};
 use pin_project_lite::pin_project;
@@ -12,7 +12,6 @@ use std::fmt;
 use std::marker::PhantomPinned;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use tracing::{debug, Level};
 
 struct BorrowToSqlParamsDebug<'a, T>(&'a [T]);
 
@@ -27,6 +26,28 @@ where
     }
 }
 
+fn is_debug_logging_enabled() -> bool {
+    #[cfg(all(feature = "tracing", feature = "log"))]
+    {
+        return tracing::enabled!(tracing::Level::DEBUG);
+    }
+
+    #[cfg(all(feature = "tracing", not(feature = "log")))]
+    {
+        return tracing::enabled!(tracing::Level::DEBUG);
+    }
+
+    #[cfg(all(feature = "log", not(feature = "tracing")))]
+    {
+        return log::log_enabled!(log::Level::Debug);
+    }
+
+    #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
+    {
+        false
+    }
+}
+
 pub async fn query<P, I>(
     client: &InnerClient,
     statement: Statement,
@@ -37,7 +58,7 @@ where
     I: IntoIterator<Item = P>,
     I::IntoIter: ExactSizeIterator,
 {
-    let buf = if tracing::enabled!(Level::DEBUG) {
+    let buf = if is_debug_logging_enabled() {
         let params = params.into_iter().collect::<Vec<_>>();
         debug!(
             "executing statement {} with parameters: {:?}",
@@ -101,8 +122,9 @@ where
     I: IntoIterator<Item = P>,
     I::IntoIter: ExactSizeIterator,
 {
-    let buf = if tracing::enabled!(Level::DEBUG) {
+    let buf = if is_debug_logging_enabled() {
         let params = params.into_iter().collect::<Vec<_>>();
+        #[cfg(any(feature = "log", feature = "tracing"))]
         debug!(
             "executing statement {} with parameters: {:?}",
             statement.name(),

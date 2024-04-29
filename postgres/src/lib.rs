@@ -106,3 +106,57 @@ mod transaction_builder;
 
 #[cfg(test)]
 mod test;
+
+/// Wrapper for 'log::info' and `tracing::info`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! info {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(feature = "tracing")]
+            { tracing::info!($($arg)+) }
+
+            #[cfg(feature = "log")]
+            { log::info!($($arg)+) }
+
+            #[cfg(not(all(feature = "log", feature = "tracing")))]
+            let _ = ($($arg)+);
+        }
+    }
+}
+
+/// Wrapper for 'log::debug' and `tracing::debug`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! debug {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(feature = "tracing")]
+            { tracing::debug!($($arg)+) }
+
+            #[cfg(feature = "log")]
+            { log::debug!($($arg)+) }
+
+            #[cfg(not(all(feature = "log", feature = "tracing")))]
+            let _ = ($($arg)+);
+        }
+    }
+}
+
+/// Wrapper for 'log::trace' and `tracing::trace`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! trace {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(feature = "tracing")]
+            { tracing::trace!($($arg)+) }
+
+            #[cfg(feature = "log")]
+            { log::trace!($($arg)+) }
+
+            #[cfg(not(all(feature = "log", feature = "tracing")))]
+            let _ = ($($arg)+);
+        }
+    }
+}

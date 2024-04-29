@@ -2,7 +2,7 @@ use crate::codec::{BackendMessage, BackendMessages, FrontendMessage, PostgresCod
 use crate::copy_in::CopyInReceiver;
 use crate::error::DbError;
 use crate::maybe_tls_stream::MaybeTlsStream;
-use crate::{AsyncMessage, Error, Notification};
+use crate::{info, trace, AsyncMessage, Error, Notification};
 use bytes::BytesMut;
 use fallible_iterator::FallibleIterator;
 use futures_channel::mpsc;
@@ -15,7 +15,6 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
-use tracing::{info, trace};
 
 pub enum RequestMessages {
     Single(FrontendMessage),
@@ -162,6 +161,7 @@ where
                         messages,
                         request_complete,
                     });
+                    #[cfg(any(feature = "log", feature = "tracing"))]
                     trace!("poll_read: waiting on sender");
                     return Ok(None);
                 }
@@ -244,10 +244,12 @@ where
                     let message = match receiver.poll_next_unpin(cx) {
                         Poll::Ready(Some(message)) => message,
                         Poll::Ready(None) => {
+                            #[cfg(any(feature = "log", feature = "tracing"))]
                             trace!("poll_write: finished copy_in request");
                             continue;
                         }
                         Poll::Pending => {
+                            #[cfg(any(feature = "log", feature = "tracing"))]
                             trace!("poll_write: waiting on copy_in stream");
                             self.pending_request = Some(RequestMessages::CopyIn(receiver));
                             return Ok(true);
@@ -336,6 +338,7 @@ where
         while let Some(message) = ready!(self.poll_message(cx)?) {
             if let AsyncMessage::Notice(notice) = message {
                 info!("{}: {}", notice.severity(), notice.message());
+                let _ = notice;
             }
         }
         Poll::Ready(Ok(()))
