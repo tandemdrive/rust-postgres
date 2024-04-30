@@ -161,7 +161,6 @@ where
                         messages,
                         request_complete,
                     });
-                    #[cfg(any(feature = "log", feature = "tracing"))]
                     trace!("poll_read: waiting on sender");
                     return Ok(None);
                 }
@@ -244,12 +243,10 @@ where
                     let message = match receiver.poll_next_unpin(cx) {
                         Poll::Ready(Some(message)) => message,
                         Poll::Ready(None) => {
-                            #[cfg(any(feature = "log", feature = "tracing"))]
                             trace!("poll_write: finished copy_in request");
                             continue;
                         }
                         Poll::Pending => {
-                            #[cfg(any(feature = "log", feature = "tracing"))]
                             trace!("poll_write: waiting on copy_in stream");
                             self.pending_request = Some(RequestMessages::CopyIn(receiver));
                             return Ok(true);
