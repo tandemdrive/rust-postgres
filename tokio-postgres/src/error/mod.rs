@@ -601,8 +601,8 @@ impl Error {
         Error::new(Kind::ConfigParse(e))
     }
 
-    pub(crate) fn config(msg: Box<dyn StdError + Sync + Send>) -> Error {
-        Error::new(Kind::Config(msg))
+    pub(crate) fn config(e: Box<dyn StdError + Sync + Send>) -> Error {
+        Error::new(Kind::Config(e))
     }
 
     pub(crate) fn row_count() -> Error {
