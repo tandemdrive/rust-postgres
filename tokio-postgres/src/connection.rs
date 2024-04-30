@@ -2,7 +2,7 @@ use crate::codec::{BackendMessage, BackendMessages, FrontendMessage, PostgresCod
 use crate::copy_in::CopyInReceiver;
 use crate::error::DbError;
 use crate::maybe_tls_stream::MaybeTlsStream;
-use crate::{AsyncMessage, Error, Notification};
+use crate::{info, trace, AsyncMessage, Error, Notification};
 use bytes::BytesMut;
 use fallible_iterator::FallibleIterator;
 use futures_channel::mpsc;
@@ -15,7 +15,6 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
-use tracing::{info, trace};
 
 pub enum RequestMessages {
     Single(FrontendMessage),
@@ -336,6 +335,7 @@ where
         while let Some(message) = ready!(self.poll_message(cx)?) {
             if let AsyncMessage::Notice(notice) = message {
                 info!("{}: {}", notice.severity(), notice.message());
+                let _ = notice;
             }
         }
         Poll::Ready(Ok(()))

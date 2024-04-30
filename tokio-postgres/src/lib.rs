@@ -189,7 +189,7 @@ pub mod types;
 ///
 /// [`Config`]: config/struct.Config.html
 #[cfg(feature = "runtime")]
-#[tracing::instrument]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 pub async fn connect<T>(
     config: &str,
     tls: T,
@@ -257,4 +257,58 @@ fn slice_iter<'a>(
     s: &'a [&'a (dyn ToSql + Sync)],
 ) -> impl ExactSizeIterator<Item = &'a (dyn ToSql + Sync)> + 'a {
     s.iter().copied()
+}
+
+/// Wrapper for 'log::info' and `tracing::info`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! info {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(feature = "tracing")]
+            { tracing::info!($($arg)+) }
+
+            #[cfg(feature = "log")]
+            { log::info!($($arg)+) }
+
+            #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
+            let _ = ($($arg)+);
+        }
+    }
+}
+
+/// Wrapper for 'log::debug' and `tracing::debug`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! debug {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(feature = "tracing")]
+            { tracing::debug!($($arg)+) }
+
+            #[cfg(feature = "log")]
+            { log::debug!($($arg)+) }
+
+            #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
+            let _ = ($($arg)+);
+        }
+    }
+}
+
+/// Wrapper for 'log::trace' and `tracing::trace`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! trace {
+    ($($arg:tt)+) => {
+        {
+            #[cfg(feature = "tracing")]
+            { tracing::trace!($($arg)+) }
+
+            #[cfg(feature = "log")]
+            { log::trace!($($arg)+) }
+
+            #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
+            let _ = ($($arg)+);
+        }
+    }
 }
