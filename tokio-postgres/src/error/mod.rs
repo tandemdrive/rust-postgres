@@ -361,6 +361,8 @@ enum Kind {
 struct ErrorInner {
     kind: Kind,
     cause: Option<Box<dyn error::Error + Sync + Send>>,
+    #[cfg(feature = "tracing-error")]
+    span_trace: Option<tracing_error::SpanTrace>,
 }
 
 /// An error communicating with the Postgres server.
@@ -399,9 +401,26 @@ impl fmt::Display for Error {
             Kind::Connect => fmt.write_str("error connecting to server")?,
             Kind::Timeout => fmt.write_str("timeout waiting for server")?,
         };
+
         if let Some(ref cause) = self.0.cause {
             write!(fmt, ": {}", cause)?;
         }
+
+        #[cfg(feature = "tracing-error")]
+        {
+            if fmt.alternate() {
+                if let Some(span_trace) = self
+                    .0
+                    .span_trace
+                    .as_ref()
+                    .filter(|s| s.status() != tracing_error::SpanTraceStatus::EMPTY)
+                {
+                    write!(fmt, "\n\nSpanTrace:\n")?;
+                    fmt::Display::fmt(&span_trace, fmt)?;
+                }
+            }
+        }
+
         Ok(())
     }
 }
@@ -438,7 +457,26 @@ impl Error {
     }
 
     fn new(kind: Kind, cause: Option<Box<dyn error::Error + Sync + Send>>) -> Error {
-        Error(Box::new(ErrorInner { kind, cause }))
+        Error(Box::new(ErrorInner {
+            kind,
+            cause,
+            #[cfg(feature = "tracing-error")]
+            span_trace: Some(tracing_error::SpanTrace::capture()),
+        }))
+    }
+
+    /// Return the captured SpanTrace. None is returned if the SpanTrace was already taken.
+    #[cfg(feature = "tracing-error")]
+    pub fn span_trace(&self) -> Option<&tracing_error::SpanTrace> {
+        self.0.span_trace.as_ref()
+    }
+
+    /// Take ownership of the captured SpanTrace.
+    ///
+    /// None is returned if the SpanTrace was already taken.
+    #[cfg(feature = "tracing-error")]
+    pub fn take_span_trace(&mut self) -> Option<tracing_error::SpanTrace> {
+        self.0.span_trace.take()
     }
 
     pub(crate) fn closed() -> Error {
