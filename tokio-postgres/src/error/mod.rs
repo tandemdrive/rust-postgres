@@ -2,7 +2,7 @@
 
 use fallible_iterator::FallibleIterator;
 use postgres_protocol::message::backend::{ErrorFields, ErrorResponseBody};
-use std::error::{self, Error as _Error};
+use std::error::Error as StdError;
 use std::fmt;
 use std::io;
 
@@ -67,22 +67,22 @@ impl Severity {
 /// A Postgres error or notice.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DbError {
-    severity: String,
+    severity: Box<str>,
     parsed_severity: Option<Severity>,
     code: SqlState,
-    message: String,
-    detail: Option<String>,
-    hint: Option<String>,
+    message: Box<str>,
+    detail: Option<Box<str>>,
+    hint: Option<Box<str>>,
     position: Option<ErrorPosition>,
-    where_: Option<String>,
-    schema: Option<String>,
-    table: Option<String>,
-    column: Option<String>,
-    datatype: Option<String>,
-    constraint: Option<String>,
-    file: Option<String>,
+    where_: Option<Box<str>>,
+    schema: Option<Box<str>>,
+    table: Option<Box<str>>,
+    column: Option<Box<str>>,
+    datatype: Option<Box<str>>,
+    constraint: Option<Box<str>>,
+    file: Option<Box<str>>,
     line: Option<u32>,
-    routine: Option<String>,
+    routine: Option<Box<str>>,
 }
 
 impl DbError {
@@ -108,11 +108,11 @@ impl DbError {
 
         while let Some(field) = fields.next()? {
             match field.type_() {
-                b'S' => severity = Some(field.value().to_owned()),
+                b'S' => severity = Some(field.value().to_string().into_boxed_str()),
                 b'C' => code = Some(SqlState::from_code(field.value())),
-                b'M' => message = Some(field.value().to_owned()),
-                b'D' => detail = Some(field.value().to_owned()),
-                b'H' => hint = Some(field.value().to_owned()),
+                b'M' => message = Some(field.value().to_string().into_boxed_str()),
+                b'D' => detail = Some(field.value().to_string().into_boxed_str()),
+                b'H' => hint = Some(field.value().to_string().into_boxed_str()),
                 b'P' => {
                     normal_position = Some(field.value().parse::<u32>().map_err(|_| {
                         io::Error::new(
@@ -130,13 +130,13 @@ impl DbError {
                     })?);
                 }
                 b'q' => internal_query = Some(field.value().to_owned()),
-                b'W' => where_ = Some(field.value().to_owned()),
-                b's' => schema = Some(field.value().to_owned()),
-                b't' => table = Some(field.value().to_owned()),
-                b'c' => column = Some(field.value().to_owned()),
-                b'd' => datatype = Some(field.value().to_owned()),
-                b'n' => constraint = Some(field.value().to_owned()),
-                b'F' => file = Some(field.value().to_owned()),
+                b'W' => where_ = Some(field.value().to_string().into_boxed_str()),
+                b's' => schema = Some(field.value().to_string().into_boxed_str()),
+                b't' => table = Some(field.value().to_string().into_boxed_str()),
+                b'c' => column = Some(field.value().to_string().into_boxed_str()),
+                b'd' => datatype = Some(field.value().to_string().into_boxed_str()),
+                b'n' => constraint = Some(field.value().to_string().into_boxed_str()),
+                b'F' => file = Some(field.value().to_string().into_boxed_str()),
                 b'L' => {
                     line = Some(field.value().parse::<u32>().map_err(|_| {
                         io::Error::new(
@@ -145,7 +145,7 @@ impl DbError {
                         )
                     })?);
                 }
-                b'R' => routine = Some(field.value().to_owned()),
+                b'R' => routine = Some(field.value().to_string().into_boxed_str()),
                 b'V' => {
                     parsed_severity = Some(Severity::from_str(field.value()).ok_or_else(|| {
                         io::Error::new(
@@ -320,7 +320,7 @@ impl fmt::Display for DbError {
     }
 }
 
-impl error::Error for DbError {}
+impl StdError for DbError {}
 
 /// Represents the position of an error in a query.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -336,31 +336,48 @@ pub enum ErrorPosition {
     },
 }
 
-#[derive(Debug, PartialEq)]
-enum Kind {
-    Io,
+/// An error communicating with the Postgres server.
+#[derive(Debug)]
+pub enum Kind {
+    /// An IO Error occurred.
+    Io(io::Error),
+    /// An unexpected message was received from postgres,
     UnexpectedMessage,
-    Tls,
-    ToSql(usize),
-    FromSql(usize),
+    /// An error occurred during the TLS handshake.
+    Tls(Box<dyn StdError + Sync + Send>),
+    /// An error occurred while converting Rust data to bytes to form a request.
+    ToSql(usize, Box<dyn StdError + Sync + Send>),
+    /// An error occurred while converting bytes received from postgres to Rust data.
+    FromSql(usize, Box<dyn StdError + Sync + Send>),
+    /// An error occurred with given column.
     Column(String),
+    /// A upexpected number of parameters was given during the encoding of a prepared statement.
     Parameters(usize, usize),
+    /// The connection is closed.
     Closed,
-    Db,
-    Parse,
-    Encode,
-    Authentication,
-    ConfigParse,
-    Config,
-    RowCount,
+    /// An error was returned from postgres.
+    Db(Box<DbError>),
+    /// An error occurred during parsing a response.
+    Parse(io::Error),
+    /// An error occurred during encoding a request.
+    Encode(io::Error),
+    /// An error occurred during authentication.
+    Authentication(Box<dyn StdError + Sync + Send>),
+    /// An error occurred while parsing the config string.
+    ConfigParse(Box<dyn StdError + Sync + Send>),
+    /// A logical error occurred while trying to use a well formed config.
+    Config(Box<dyn StdError + Sync + Send>),
+    /// An error occurred while connecting to a server.
     #[cfg(feature = "runtime")]
-    Connect,
+    Connect(io::Error),
+    /// A query returned an unexpected number of rows.
+    RowCount,
+    /// A timeout while waiting for the server.
     Timeout,
 }
 
 struct ErrorInner {
     kind: Kind,
-    cause: Option<Box<dyn error::Error + Sync + Send>>,
     #[cfg(feature = "tracing-error")]
     span_trace: Option<tracing_error::SpanTrace>,
 }
@@ -370,53 +387,52 @@ pub struct Error(Box<ErrorInner>);
 
 impl fmt::Debug for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.debug_struct("Error")
-            .field("kind", &self.0.kind)
-            .field("cause", &self.0.cause)
-            .finish()
+        let mut ds = fmt.debug_struct("Error");
+        ds.field("kind", &self.0.kind);
+
+        #[cfg(feature = "tracing-error")]
+        ds.field("span_trace:", &self.0.span_trace);
+
+        ds.finish()
     }
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.0.kind {
-            Kind::Io => fmt.write_str("error communicating with the server")?,
-            Kind::UnexpectedMessage => fmt.write_str("unexpected message from server")?,
-            Kind::Tls => fmt.write_str("error performing TLS handshake")?,
-            Kind::ToSql(idx) => write!(fmt, "error serializing parameter {}", idx)?,
-            Kind::FromSql(idx) => write!(fmt, "error deserializing column {}", idx)?,
-            Kind::Column(column) => write!(fmt, "invalid column `{}`", column)?,
+            Kind::Io(err) => write!(f, "error communicating with the server: {err}")?,
+            Kind::UnexpectedMessage => f.write_str("unexpected message from server")?,
+            Kind::Tls(err) => write!(f, "error performing TLS handshake: {err}")?,
+            Kind::ToSql(idx, err) => write!(f, "error serializing parameter {idx}: {err}")?,
+            Kind::FromSql(idx, err) => write!(f, "error deserializing column {idx}: {err}")?,
+            Kind::Column(column) => write!(f, "invalid column `{column}`")?,
             Kind::Parameters(real, expected) => {
-                write!(fmt, "expected {expected} parameters but got {real}")?
+                write!(f, "expected {expected} parameters but got {real}")?
             }
-            Kind::Closed => fmt.write_str("connection closed")?,
-            Kind::Db => fmt.write_str("db error")?,
-            Kind::Parse => fmt.write_str("error parsing response from server")?,
-            Kind::Encode => fmt.write_str("error encoding message to server")?,
-            Kind::Authentication => fmt.write_str("authentication error")?,
-            Kind::ConfigParse => fmt.write_str("invalid connection string")?,
-            Kind::Config => fmt.write_str("invalid configuration")?,
-            Kind::RowCount => fmt.write_str("query returned an unexpected number of rows")?,
+            Kind::Closed => f.write_str("connection closed")?,
+            Kind::Db(err) => write!(f, "db error: {err}")?,
+            Kind::Parse(err) => write!(f, "error parsing response from server: {err}")?,
+            Kind::Encode(err) => write!(f, "error encoding message to server: {err}")?,
+            Kind::Authentication(err) => write!(f, "authentication error: {err}")?,
+            Kind::ConfigParse(err) => write!(f, "invalid connection string: {err}")?,
+            Kind::Config(err) => write!(f, "invalid configuration: {err}")?,
             #[cfg(feature = "runtime")]
-            Kind::Connect => fmt.write_str("error connecting to server")?,
-            Kind::Timeout => fmt.write_str("timeout waiting for server")?,
+            Kind::Connect(err) => write!(f, "error connecting to server: {err}")?,
+            Kind::RowCount => f.write_str("query returned an unexpected number of rows")?,
+            Kind::Timeout => f.write_str("timeout waiting for server")?,
         };
-
-        if let Some(ref cause) = self.0.cause {
-            write!(fmt, ": {}", cause)?;
-        }
 
         #[cfg(feature = "tracing-error")]
         {
-            if fmt.alternate() {
+            if f.alternate() {
                 if let Some(span_trace) = self
                     .0
                     .span_trace
                     .as_ref()
                     .filter(|s| s.status() != tracing_error::SpanTraceStatus::EMPTY)
                 {
-                    write!(fmt, "\n\nSpanTrace:\n")?;
-                    fmt::Display::fmt(&span_trace, fmt)?;
+                    write!(f, "\n\nSpanTrace:\n")?;
+                    fmt::Display::fmt(&span_trace, f)?;
                 }
             }
         }
@@ -425,28 +441,70 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        self.0.cause.as_ref().map(|e| &**e as _)
+impl StdError for Error {
+    #[allow(trivial_casts)]
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match &self.0.kind {
+            Kind::Io(err) => Some(err as _),
+            Kind::UnexpectedMessage => None,
+            Kind::Tls(err) => Some(&**err as _),
+            Kind::ToSql(_, err) => Some(&**err as _),
+            Kind::FromSql(_, err) => Some(&**err as _),
+            Kind::Column(_) => None,
+            Kind::Parameters(..) => None,
+            Kind::Closed => None,
+            Kind::Db(err) => Some(&**err as _),
+            Kind::Parse(err) => Some(err as _),
+            Kind::Encode(err) => Some(err as _),
+            Kind::Authentication(err) => Some(&**err as _),
+            Kind::ConfigParse(err) => Some(&**err as _),
+            Kind::Config(err) => Some(&**err as _),
+            #[cfg(feature = "runtime")]
+            Kind::Connect(err) => Some(err as _),
+            Kind::RowCount => None,
+            Kind::Timeout => None,
+        }
     }
 }
 
 impl Error {
     /// Consumes the error, returning its cause.
-    pub fn into_source(self) -> Option<Box<dyn error::Error + Sync + Send>> {
-        self.0.cause
+    pub fn into_source(self) -> Option<Box<dyn StdError + Sync + Send>> {
+        match self.0.kind {
+            Kind::Io(err) => Some(Box::new(err)),
+            Kind::UnexpectedMessage => None,
+            Kind::Tls(err) => Some(err),
+            Kind::ToSql(_, err) => Some(err),
+            Kind::FromSql(_, err) => Some(err),
+            Kind::Column(_) => None,
+            Kind::Parameters(..) => None,
+            Kind::Closed => None,
+            Kind::Db(err) => Some(Box::new(err)),
+            Kind::Parse(err) => Some(Box::new(err)),
+            Kind::Encode(err) => Some(Box::new(err)),
+            Kind::Authentication(err) => Some(err),
+            Kind::ConfigParse(err) => Some(err),
+            Kind::Config(err) => Some(err),
+            #[cfg(feature = "runtime")]
+            Kind::Connect(err) => Some(Box::new(err)),
+            Kind::RowCount => None,
+            Kind::Timeout => None,
+        }
     }
 
     /// Returns the source of this error if it was a `DbError`.
     ///
     /// This is a simple convenience method.
     pub fn as_db_error(&self) -> Option<&DbError> {
-        self.source().and_then(|e| e.downcast_ref::<DbError>())
+        match &self.0.kind {
+            Kind::Db(err) => Some(err),
+            _ => None,
+        }
     }
 
     /// Determines if the error was associated with closed connection.
     pub fn is_closed(&self) -> bool {
-        self.0.kind == Kind::Closed
+        matches!(self.0.kind, Kind::Closed)
     }
 
     /// Returns the SQLSTATE error code associated with the error.
@@ -456,13 +514,22 @@ impl Error {
         self.as_db_error().map(DbError::code)
     }
 
-    fn new(kind: Kind, cause: Option<Box<dyn error::Error + Sync + Send>>) -> Error {
-        Error(Box::new(ErrorInner {
+    fn new(kind: Kind) -> Self {
+        Self(Box::new(ErrorInner {
             kind,
-            cause,
             #[cfg(feature = "tracing-error")]
             span_trace: Some(tracing_error::SpanTrace::capture()),
         }))
+    }
+
+    /// Return the Kind
+    pub fn kind(&self) -> &Kind {
+        &self.0.kind
+    }
+
+    /// Return the Kind
+    pub fn into_kind(self) -> Kind {
+        self.0.kind
     }
 
     /// Return the captured SpanTrace. None is returned if the SpanTrace was already taken.
@@ -479,78 +546,76 @@ impl Error {
         self.0.span_trace.take()
     }
 
-    pub(crate) fn closed() -> Error {
-        Error::new(Kind::Closed, None)
+    pub(crate) fn io(e: io::Error) -> Error {
+        Error::new(Kind::Io(e))
     }
 
     pub(crate) fn unexpected_message() -> Error {
-        Error::new(Kind::UnexpectedMessage, None)
+        Error::new(Kind::UnexpectedMessage)
     }
 
-    #[allow(clippy::needless_pass_by_value)]
+    pub(crate) fn tls(err: Box<dyn StdError + Sync + Send>) -> Error {
+        Error::new(Kind::Tls(err))
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn to_sql(e: Box<dyn StdError + Sync + Send>, idx: usize) -> Error {
+        Error::new(Kind::ToSql(idx, e))
+    }
+
+    pub(crate) fn from_sql(e: Box<dyn StdError + Sync + Send>, idx: usize) -> Error {
+        Error::new(Kind::FromSql(idx, e))
+    }
+    pub(crate) fn column(column: String) -> Error {
+        Error::new(Kind::Column(column))
+    }
+
+    pub(crate) fn parameters(real: usize, expected: usize) -> Error {
+        Error::new(Kind::Parameters(real, expected))
+    }
+
+    pub(crate) fn closed() -> Error {
+        Error::new(Kind::Closed)
+    }
+
     pub(crate) fn db(error: ErrorResponseBody) -> Error {
         match DbError::parse(&mut error.fields()) {
-            Ok(e) => Error::new(Kind::Db, Some(Box::new(e))),
-            Err(e) => Error::new(Kind::Parse, Some(Box::new(e))),
+            Ok(e) => Error::new(Kind::Db(Box::new(e))),
+            Err(e) => Error::new(Kind::Parse(e)),
         }
     }
 
     pub(crate) fn parse(e: io::Error) -> Error {
-        Error::new(Kind::Parse, Some(Box::new(e)))
+        Error::new(Kind::Parse(e))
     }
 
     pub(crate) fn encode(e: io::Error) -> Error {
-        Error::new(Kind::Encode, Some(Box::new(e)))
+        Error::new(Kind::Encode(e))
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    pub(crate) fn to_sql(e: Box<dyn error::Error + Sync + Send>, idx: usize) -> Error {
-        Error::new(Kind::ToSql(idx), Some(e))
+    pub(crate) fn authentication(e: Box<dyn StdError + Sync + Send>) -> Error {
+        Error::new(Kind::Authentication(e))
     }
 
-    pub(crate) fn from_sql(e: Box<dyn error::Error + Sync + Send>, idx: usize) -> Error {
-        Error::new(Kind::FromSql(idx), Some(e))
+    pub(crate) fn config_parse(e: Box<dyn StdError + Sync + Send>) -> Error {
+        Error::new(Kind::ConfigParse(e))
     }
 
-    pub(crate) fn column(column: String) -> Error {
-        Error::new(Kind::Column(column), None)
-    }
-
-    pub(crate) fn parameters(real: usize, expected: usize) -> Error {
-        Error::new(Kind::Parameters(real, expected), None)
-    }
-
-    pub(crate) fn tls(e: Box<dyn error::Error + Sync + Send>) -> Error {
-        Error::new(Kind::Tls, Some(e))
-    }
-
-    pub(crate) fn io(e: io::Error) -> Error {
-        Error::new(Kind::Io, Some(Box::new(e)))
-    }
-
-    pub(crate) fn authentication(e: Box<dyn error::Error + Sync + Send>) -> Error {
-        Error::new(Kind::Authentication, Some(e))
-    }
-
-    pub(crate) fn config_parse(e: Box<dyn error::Error + Sync + Send>) -> Error {
-        Error::new(Kind::ConfigParse, Some(e))
-    }
-
-    pub(crate) fn config(e: Box<dyn error::Error + Sync + Send>) -> Error {
-        Error::new(Kind::Config, Some(e))
+    pub(crate) fn config(e: Box<dyn StdError + Sync + Send>) -> Error {
+        Error::new(Kind::Config(e))
     }
 
     pub(crate) fn row_count() -> Error {
-        Error::new(Kind::RowCount, None)
+        Error::new(Kind::RowCount)
     }
 
     #[cfg(feature = "runtime")]
     pub(crate) fn connect(e: io::Error) -> Error {
-        Error::new(Kind::Connect, Some(Box::new(e)))
+        Error::new(Kind::Connect(e))
     }
 
     #[doc(hidden)]
     pub fn __private_api_timeout() -> Error {
-        Error::new(Kind::Timeout, None)
+        Error::new(Kind::Timeout)
     }
 }
