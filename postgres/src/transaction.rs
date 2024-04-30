@@ -74,7 +74,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like `Client::execute`.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn execute<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<u64, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -84,7 +84,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like `Client::query`.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn query<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -94,7 +94,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like `Client::query_one`.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn query_one<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<Row, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -104,7 +104,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like `Client::query_opt`.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn query_opt<T>(
         &mut self,
         query: &T,
@@ -142,7 +142,7 @@ impl<'a> Transaction<'a> {
     /// # Panics
     ///
     /// Panics if the number of parameters provided does not match the number expected.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn bind<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<Portal, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,

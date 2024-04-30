@@ -120,7 +120,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query<T>(
         &self,
         statement: &T,
@@ -133,7 +133,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_as`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -146,7 +146,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_scalar`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_scalar<T, R: FromSqlOwned>(
         &self,
         statement: &T,
@@ -159,7 +159,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_one`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one<T>(
         &self,
         statement: &T,
@@ -172,7 +172,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_one_as`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -185,7 +185,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_one_scalar`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one_scalar<T, R: FromSqlOwned>(
         &self,
         statement: &T,
@@ -198,7 +198,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_opt`].
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt<T>(
         &self,
         statement: &T,
@@ -211,7 +211,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_opt_as`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -224,7 +224,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::query_opt_scalar`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt_scalar<T, R: FromSqlOwned>(
         &self,
         statement: &T,
@@ -249,7 +249,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::stream`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream<T>(
         &self,
         statement: &T,
@@ -262,7 +262,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::stream_as`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -275,7 +275,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::execute`]
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn execute<T>(
         &self,
         statement: &T,
@@ -307,7 +307,7 @@ impl<'a> Transaction<'a> {
     /// # Panics
     ///
     /// Panics if the number of parameters provided does not match the number expected.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn bind<T>(
         &self,
         statement: &T,

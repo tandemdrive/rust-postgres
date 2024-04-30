@@ -38,6 +38,7 @@ impl Client {
     /// See the documentation for [`Config`] for information about the connection syntax.
     ///
     /// [`Config`]: config/struct.Config.html
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params, tls_mode)))]
     pub fn connect<T>(params: &str, tls_mode: T) -> Result<Client, Error>
     where
         T: MakeTlsConnect<Socket> + 'static + Send + fmt::Debug,
@@ -83,7 +84,7 @@ impl Client {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn execute<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<u64, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -116,7 +117,7 @@ impl Client {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn query<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -150,7 +151,7 @@ impl Client {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn query_one<T>(&mut self, query: &T, params: &[&(dyn ToSql + Sync)]) -> Result<Row, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -190,7 +191,7 @@ impl Client {
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub fn query_opt<T>(
         &mut self,
         query: &T,
