@@ -271,7 +271,7 @@ macro_rules! info {
             #[cfg(feature = "log")]
             { log::info!($($arg)+) }
 
-            #[cfg(not(all(feature = "log", feature = "tracing")))]
+            #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
             let _ = ($($arg)+);
         }
     }
@@ -289,7 +289,7 @@ macro_rules! debug {
             #[cfg(feature = "log")]
             { log::debug!($($arg)+) }
 
-            #[cfg(not(all(feature = "log", feature = "tracing")))]
+            #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
             let _ = ($($arg)+);
         }
     }
@@ -307,7 +307,7 @@ macro_rules! trace {
             #[cfg(feature = "log")]
             { log::trace!($($arg)+) }
 
-            #[cfg(not(all(feature = "log", feature = "tracing")))]
+            #[cfg(all(not(feature = "log"), not(feature = "tracing")))]
             let _ = ($($arg)+);
         }
     }
