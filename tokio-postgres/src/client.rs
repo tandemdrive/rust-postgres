@@ -246,7 +246,7 @@ impl Client {
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
     /// with the `prepare` method.
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query<T>(
         &self,
         statement: &T,
@@ -262,7 +262,7 @@ impl Client {
     }
 
     /// Returns a vector of `T`s
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -276,6 +276,7 @@ impl Client {
     }
 
     /// Returns a vector of scalars
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_scalar<T, R: FromSqlOwned>(
         &self,
         statement: &T,
@@ -298,6 +299,7 @@ impl Client {
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
     /// with the `prepare` method.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one<T>(
         &self,
         statement: &T,
@@ -322,6 +324,7 @@ impl Client {
     }
 
     /// Like [`Client::query_one`] but converts row to `T`.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -335,6 +338,7 @@ impl Client {
     }
 
     /// Like [`Client::query_one_scalar`] but returns one scalar
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one_scalar<T, R: FromSqlOwned>(
         &self,
         statement: &T,
@@ -357,6 +361,7 @@ impl Client {
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
     /// with the `prepare` method.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt<T>(
         &self,
         statement: &T,
@@ -381,6 +386,7 @@ impl Client {
     }
 
     /// Like [`Client::query_opt`] but converts row into `T`
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -394,6 +400,7 @@ impl Client {
     }
 
     /// Like [`Client::query_opt`] but returns an optional scalar
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt_scalar<T, R: FromSqlOwned>(
         &self,
         statement: &T,
@@ -441,6 +448,7 @@ impl Client {
     /// # Ok(())
     /// # }
     /// ```
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_raw<T, P, I>(&self, statement: &T, params: I) -> Result<RowStream, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -453,6 +461,7 @@ impl Client {
     }
 
     /// Returns a stream of rows
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream<T>(
         &self,
         statement: &T,
@@ -466,6 +475,7 @@ impl Client {
     }
 
     /// Returns a stream of `T`s
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream_as<T, R: FromRow>(
         &self,
         statement: &T,
@@ -490,6 +500,7 @@ impl Client {
     /// with the `prepare` method.
     ///
     /// If the statement does not modify any rows (e.g. `SELECT`), 0 is returned.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn execute<T>(
         &self,
         statement: &T,
@@ -511,6 +522,7 @@ impl Client {
     /// with the `prepare` method.
     ///
     /// [`execute`]: #method.execute
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn execute_raw<T, P, I>(&self, statement: &T, params: I) -> Result<u64, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -526,6 +538,7 @@ impl Client {
     ///
     /// PostgreSQL does not support parameters in `COPY` statements, so this method does not take any. The copy *must*
     /// be explicitly completed via the `Sink::close` or `finish` methods. If it is not, the copy will be aborted.
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn copy_in<T, U>(&self, statement: &T) -> Result<CopyInSink<U>, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -538,6 +551,7 @@ impl Client {
     /// Executes a `COPY TO STDOUT` statement, returning a stream of the resulting data.
     ///
     /// PostgreSQL does not support parameters in `COPY` statements, so this method does not take any.
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn copy_out<T>(&self, statement: &T) -> Result<CopyOutStream, Error>
     where
         T: ?Sized + ToStatement + fmt::Debug,
@@ -559,10 +573,12 @@ impl Client {
     /// Prepared statements should be use for any query which contains user-specified data, as they provided the
     /// functionality to safely embed that data in the request. Do not form statements via string concatenation and pass
     /// them to this method!
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn simple_query(&self, query: &str) -> Result<Vec<SimpleQueryMessage>, Error> {
         self.simple_query_raw(query).await?.try_collect().await
     }
 
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub(crate) async fn simple_query_raw(&self, query: &str) -> Result<SimpleQueryStream, Error> {
         simple_query::simple_query(self.inner(), query).await
     }
@@ -577,6 +593,7 @@ impl Client {
     /// Prepared statements should be use for any query which contains user-specified data, as they provided the
     /// functionality to safely embed that data in the request. Do not form statements via string concatenation and pass
     /// them to this method!
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn batch_execute(&self, query: &str) -> Result<(), Error> {
         simple_query::batch_execute(self.inner(), query).await
     }

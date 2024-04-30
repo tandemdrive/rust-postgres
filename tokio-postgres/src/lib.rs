@@ -189,7 +189,7 @@ pub mod types;
 ///
 /// [`Config`]: config/struct.Config.html
 #[cfg(feature = "runtime")]
-#[cfg_attr(feature = "tracing", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip(config, tls)))]
 pub async fn connect<T>(
     config: &str,
     tls: T,
