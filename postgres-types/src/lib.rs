@@ -821,7 +821,11 @@ macro_rules! tuple_impls {
                                     "could not find type for record field, only built-in postgres types are currently supported inside records".into()
                                 })?;
 
-                            $Type::from_sql_nullable(&ty, field.bytes())?
+                            if $Type::accepts(&ty) {
+                                $Type::from_sql_nullable(&ty, field.bytes())?
+                            } else {
+                                return Err(Box::new(WrongType::new::<$Type>(ty)));
+                            }
                         }),*
                     ))
                 }

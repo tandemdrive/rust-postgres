@@ -1038,3 +1038,18 @@ async fn array_of_records() {
 
     assert_eq!(record, vec![(1, 2), (3, 4)]);
 }
+
+#[tokio::test]
+async fn array_of_records_wrong_type() {
+    let client = connect("user=postgres").await;
+
+    let record: Result<Vec<(String, i32)>, _> = client
+        .query_one_scalar("SELECT ARRAY[(1, 2), (3, 4)]", &[])
+        .await;
+
+    if let Err(err) = record {
+        assert_eq!("cannot convert between the Rust type `std::string::String` and the Postgres type `unknown`", err.to_string());
+    } else {
+        panic!("wrong type should fail with wrong type error");
+    };
+}
