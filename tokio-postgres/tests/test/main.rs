@@ -1048,7 +1048,7 @@ async fn array_of_records_wrong_type() {
         .await;
 
     if let Err(err) = record {
-        assert_eq!("cannot convert between the Rust type `std::string::String` and the Postgres type `unknown`", err.to_string());
+        assert_eq!("error deserializing column 0: cannot convert between the Rust type `alloc::string::String` and the Postgres type `int4`", err.to_string());
     } else {
         panic!("wrong type should fail with wrong type error");
     };
