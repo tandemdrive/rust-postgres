@@ -343,11 +343,11 @@ pub enum Kind {
     Io(io::Error),
     /// An unexpected message was received from postgres,
     UnexpectedMessage,
-    /// An error occured during the TLS handshake.
+    /// An error occurred during the TLS handshake.
     Tls(Box<dyn StdError + Sync + Send>),
-    /// An error occured while converting Rust data to bytes to form a request.
+    /// An error occurred while converting Rust data to bytes to form a request.
     ToSql(usize, Box<dyn StdError + Sync + Send>),
-    /// An error occured while converting bytes received from postgres to Rust data.
+    /// An error occurred while converting bytes received from postgres to Rust data.
     FromSql(usize, Box<dyn StdError + Sync + Send>),
     /// An error occurred with given column.
     Column(String),
@@ -357,15 +357,15 @@ pub enum Kind {
     Closed,
     /// An error was returned from postgres.
     Db(Box<DbError>),
-    /// An error occurred during parsing a responce.
+    /// An error occurred during parsing a response.
     Parse(io::Error),
     /// An error occurred during encoding a request.
     Encode(io::Error),
     /// An error occurred during authentication.
     Authentication(Box<dyn StdError + Sync + Send>),
-    /// An error occured while parsing the config string.
+    /// An error occurred while parsing the config string.
     ConfigParse(Box<dyn StdError + Sync + Send>),
-    /// An logical error occurred while trying to use a well formed config.
+    /// A logical error occurred while trying to use a well formed config.
     Config(Box<dyn StdError + Sync + Send>),
     /// An error occurred while connecting to a server.
     #[cfg(feature = "runtime")]
