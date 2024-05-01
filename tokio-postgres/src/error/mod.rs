@@ -347,7 +347,7 @@ pub enum Kind {
     Tls(Box<dyn StdError + Sync + Send>),
     /// An error occurred while converting Rust data to bytes to form a request.
     ToSql(usize, Box<dyn StdError + Sync + Send>),
-    /// An error occurred while converting bytes received from postgres to Rust data.
+    /// An error occured while converting bytes received from postgres to Rust data.
     FromSql(usize, Box<dyn StdError + Sync + Send>),
     /// An error occurred with given column.
     Column(String),

@@ -616,7 +616,10 @@ impl Client {
     /// them to this method!
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn simple_query(&self, query: &str) -> Result<Vec<SimpleQueryMessage>, Error> {
-        self.simple_query_raw(query).await?.try_collect().await
+        simple_query::simple_query(self.inner(), query)
+            .await?
+            .try_collect()
+            .await
     }
 
     pub(crate) async fn simple_query_raw(&self, query: &str) -> Result<SimpleQueryStream, Error> {
