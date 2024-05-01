@@ -622,7 +622,6 @@ impl Client {
             .await
     }
 
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub(crate) async fn simple_query_raw(&self, query: &str) -> Result<SimpleQueryStream, Error> {
         simple_query::simple_query(self.inner(), query).await
     }
