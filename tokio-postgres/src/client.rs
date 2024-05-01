@@ -267,7 +267,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         query::query(&self.inner, statement, slice_iter(params))
             .await?
             .try_collect()
@@ -333,7 +333,8 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let stream = self.query_raw(statement, slice_iter(params)).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
+        let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         pin_mut!(stream);
 
         let row = match stream.try_next().await? {
@@ -407,7 +408,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         pin_mut!(stream);
 
@@ -494,7 +495,7 @@ impl Client {
         I: IntoIterator<Item = P>,
         I::IntoIter: ExactSizeIterator,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         query::query(&self.inner, statement, params).await
     }
 
@@ -508,7 +509,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         Ok(stream)
     }
@@ -523,7 +524,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         Ok(stream
             .map(move |x| x.and_then(|x| FromRow::from_row(&x)))
@@ -549,7 +550,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         query::execute(self.inner(), statement, slice_iter(params)).await
     }
 
@@ -571,7 +572,7 @@ impl Client {
         I: IntoIterator<Item = P>,
         I::IntoIter: ExactSizeIterator,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         query::execute(self.inner(), statement, params).await
     }
 
@@ -585,7 +586,7 @@ impl Client {
         T: ?Sized + ToStatement + fmt::Debug,
         U: Buf + 'static + Send,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         copy_in::copy_in(self.inner(), statement).await
     }
 
@@ -597,7 +598,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(self).await?;
+        let statement = statement.__convert().into_statement(&self.inner).await?;
         copy_out::copy_out(self.inner(), statement).await
     }
 
