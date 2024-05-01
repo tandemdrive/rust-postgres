@@ -263,7 +263,7 @@ impl Client {
 
     /// Returns a vector of `T`s
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_as<T, R: FromRow>(
+    pub async fn query_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -277,7 +277,7 @@ impl Client {
 
     /// Returns a vector of scalars
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_scalar<T, R: FromSqlOwned>(
+    pub async fn query_scalar<R: FromSqlOwned, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -325,7 +325,7 @@ impl Client {
 
     /// Like [`Client::query_one`] but converts row to `T`.
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_one_as<T, R: FromRow>(
+    pub async fn query_one_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -339,7 +339,7 @@ impl Client {
 
     /// Like [`Client::query_one_scalar`] but returns one scalar
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_one_scalar<T, R: FromSqlOwned>(
+    pub async fn query_one_scalar<R: FromSqlOwned, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -387,7 +387,7 @@ impl Client {
 
     /// Like [`Client::query_opt`] but converts row into `T`
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_opt_as<T, R: FromRow>(
+    pub async fn query_opt_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -401,7 +401,7 @@ impl Client {
 
     /// Like [`Client::query_opt`] but returns an optional scalar
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_opt_scalar<T, R: FromSqlOwned>(
+    pub async fn query_opt_scalar<R: FromSqlOwned, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -476,7 +476,7 @@ impl Client {
 
     /// Returns a stream of `T`s
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn stream_as<T, R: FromRow>(
+    pub async fn stream_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],

@@ -134,7 +134,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::query_as`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_as<T, R: FromRow>(
+    pub async fn query_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -147,7 +147,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::query_scalar`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_scalar<T, R: FromSqlOwned>(
+    pub async fn query_scalar<R: FromSqlOwned, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -173,7 +173,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::query_one_as`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_one_as<T, R: FromRow>(
+    pub async fn query_one_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -186,7 +186,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::query_one_scalar`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_one_scalar<T, R: FromSqlOwned>(
+    pub async fn query_one_scalar<R: FromSqlOwned, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -212,7 +212,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::query_opt_as`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_opt_as<T, R: FromRow>(
+    pub async fn query_opt_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -225,7 +225,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::query_opt_scalar`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn query_opt_scalar<T, R: FromSqlOwned>(
+    pub async fn query_opt_scalar<R: FromSqlOwned, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -263,7 +263,7 @@ impl<'a> Transaction<'a> {
 
     /// Like [`Client::stream_as`]
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn stream_as<T, R: FromRow>(
+    pub async fn stream_as<R: FromRow, T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],

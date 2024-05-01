@@ -27,7 +27,7 @@ async fn query_row<R: FromRow>() -> Result<Vec<R>, tokio_postgres::Error> {
         .unwrap();
 
     client
-        .query_as::<_, R>("SELECT name, age FROM person", &[])
+        .query_as::<R, _>("SELECT name, age FROM person", &[])
         .await
 }
 
