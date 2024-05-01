@@ -222,7 +222,7 @@ impl Client {
     /// which are set when executed. Prepared statements can only be used with the connection that created them.
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn prepare(&self, query: &str) -> Result<Statement, Error> {
-        self.prepare_typed(query, &[]).await
+        prepare::prepare(&self.inner, query, &[]).await
     }
 
     /// Like `prepare`, but allows the types of query parameters to be explicitly specified.
@@ -255,7 +255,20 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        self.query_raw(statement, slice_iter(params))
+        self.query_intern(statement, params)
+    }
+
+    /// An uninstrumented version of `query`.
+    async fn query_intern<T>(
+        &self,
+        statement: &T,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<Vec<Row>, Error>
+    where
+        T: ?Sized + ToStatement + fmt::Debug,
+    {
+        let statement = statement.__convert().into_statement(self).await?;
+        query::query(&self.inner, statement, slice_iter(params))
             .await?
             .try_collect()
             .await
@@ -271,7 +284,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let rows = self.query(statement, params).await?;
+        let rows = self.query_intern(statement, params).await?;
         rows.iter().map(|x| FromRow::from_row(x)).collect()
     }
 
@@ -285,7 +298,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let rows = self.query(statement, params).await?;
+        let rows = self.query_intern(statement, params).await?;
         rows.into_iter().map(|r| r.try_get(0)).collect()
     }
 
@@ -301,6 +314,18 @@ impl Client {
     /// with the `prepare` method.
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one<T>(
+        &self,
+        statement: &T,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<Row, Error>
+    where
+        T: ?Sized + ToStatement + fmt::Debug,
+    {
+        self.query_one_intern(statement, params)
+    }
+
+    /// An uninstrumented version of `query_one_intern`.
+    async fn query_one_intern<T>(
         &self,
         statement: &T,
         params: &[&(dyn ToSql + Sync)],
@@ -333,7 +358,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let row = self.query_one(statement, params).await?;
+        let row = self.query_one_intern(statement, params).await?;
         FromRow::from_row(&row)
     }
 
@@ -347,7 +372,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let row = self.query_one(statement, params).await?;
+        let row = self.query_one_intern(statement, params).await?;
         row.try_get(0)
     }
 
@@ -370,7 +395,20 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let stream = self.query_raw(statement, slice_iter(params)).await?;
+        self.query_opt_intern(statement, params)
+    }
+
+    /// An uninstrumented version of `query_opt_intern`.
+    pub async fn query_opt_intern<T>(
+        &self,
+        statement: &T,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<Option<Row>, Error>
+    where
+        T: ?Sized + ToStatement + fmt::Debug,
+    {
+        let statement = statement.__convert().into_statement(self).await?;
+        let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         pin_mut!(stream);
 
         let row = match stream.try_next().await? {
@@ -395,7 +433,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let row = self.query_opt(statement, params).await?;
+        let row = self.query_opt_intern(statement, params).await?;
         row.map(|x| FromRow::from_row(&x)).transpose()
     }
 
@@ -409,7 +447,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let row = self.query_opt(statement, params).await?;
+        let row = self.query_opt_intern(statement, params).await?;
         row.map(|x| (x.try_get::<_, R>(0))).transpose()
     }
 
@@ -470,7 +508,8 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let stream = self.query_raw(statement, slice_iter(params)).await?;
+        let statement = statement.__convert().into_statement(self).await?;
+        let stream = query::query(&self.inner, statement, slice_iter(params)).await;
         Ok(stream)
     }
 
@@ -484,7 +523,8 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let stream = self.stream(statement, params).await?;
+        let statement = statement.__convert().into_statement(self).await?;
+        let stream = query::query(&self.inner, statement, params).await;
         Ok(stream
             .map(move |x| x.and_then(|x| FromRow::from_row(&x)))
             .boxed())
@@ -509,7 +549,8 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        self.execute_raw(statement, slice_iter(params)).await
+        let statement = statement.__convert().into_statement(self).await?;
+        query::execute(self.inner(), statement, slice_iter(params)).await
     }
 
     /// The maximally flexible version of [`execute`].
@@ -575,7 +616,10 @@ impl Client {
     /// them to this method!
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn simple_query(&self, query: &str) -> Result<Vec<SimpleQueryMessage>, Error> {
-        self.simple_query_raw(query).await?.try_collect().await
+        simple_query::simple_query(self.inner(), query)
+            .await?
+            .try_collect()
+            .await
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
