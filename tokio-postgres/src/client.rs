@@ -255,7 +255,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        self.query_intern(statement, params)
+        self.query_intern(statement, params).await
     }
 
     /// An uninstrumented version of `query`.
@@ -321,7 +321,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        self.query_one_intern(statement, params)
+        self.query_one_intern(statement, params).await
     }
 
     /// An uninstrumented version of `query_one_intern`.
@@ -395,7 +395,7 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        self.query_opt_intern(statement, params)
+        self.query_opt_intern(statement, params).await
     }
 
     /// An uninstrumented version of `query_opt_intern`.
@@ -509,7 +509,7 @@ impl Client {
         T: ?Sized + ToStatement + fmt::Debug,
     {
         let statement = statement.__convert().into_statement(self).await?;
-        let stream = query::query(&self.inner, statement, slice_iter(params)).await;
+        let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         Ok(stream)
     }
 
@@ -524,7 +524,7 @@ impl Client {
         T: ?Sized + ToStatement + fmt::Debug,
     {
         let statement = statement.__convert().into_statement(self).await?;
-        let stream = query::query(&self.inner, statement, params).await;
+        let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         Ok(stream
             .map(move |x| x.and_then(|x| FromRow::from_row(&x)))
             .boxed())
