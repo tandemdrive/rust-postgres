@@ -10,7 +10,7 @@ repository = "https://github.com/sfackler/rust-postgres-range"
 [dependencies]
 postgres-protocol = { path = "../postgres-protocol" }
 postgres-types = { path = "../postgres-types" }
-chrono = { version = "0.4" }
 
 [dev-dependencies]
+chrono = { version = "0.4" }
 postgres = { path = "../postgres", features = ["with-chrono-0_4"] }
