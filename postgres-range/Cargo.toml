@@ -1,0 +1,16 @@
+[package]
+name = "postgres_range"
+version = "0.11.1"
+authors = ["Steven Fackler <sfackler@gmail.com>"]
+edition = "2018"
+license = "MIT"
+description = "Range support for rust-postgres"
+repository = "https://github.com/sfackler/rust-postgres-range"
+
+[dependencies]
+postgres-protocol = { path = "../postgres-protocol" }
+postgres-types = { path = "../postgres-types" }
+chrono = { version = "0.4" }
+
+[dev-dependencies]
+postgres = { path = "../postgres", features = ["with-chrono-0_4"] }

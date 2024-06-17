@@ -7,6 +7,7 @@ members = [
     "postgres-native-tls",
     "postgres-openssl",
     "postgres-protocol",
+    "postgres-range",
     "postgres-types",
     "tokio-postgres",
     "tokio-postgres-derive",
