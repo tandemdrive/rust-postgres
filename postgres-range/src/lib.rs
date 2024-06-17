@@ -5,7 +5,7 @@
 #[macro_use(to_sql_checked)]
 extern crate postgres_types;
 
-use std::{cmp::Ordering, fmt, i32, marker::PhantomData};
+use std::{cmp::Ordering, fmt, marker::PhantomData};
 
 use BoundSide::{Lower, Upper};
 use BoundType::{Exclusive, Inclusive};
@@ -518,8 +518,6 @@ where
 
 #[cfg(test)]
 mod test {
-    use std::i32;
-
     use super::BoundType::{Exclusive, Inclusive};
     use super::{BoundType, LowerBound, Range, RangeBound, UpperBound};
 
