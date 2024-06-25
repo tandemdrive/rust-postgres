@@ -1,5 +1,9 @@
 # Change Log
 
+### Added
+
+* Added support for `chrono-tz` 0.9 via the `with-chrono-tz-0_9` feature.
+
 ## v0.2.6 - 2023-08-19
 
 ### Fixed
