@@ -94,7 +94,7 @@ async fn query_tuple() {
     let users = query_row::<(String, i32)>().await.unwrap();
 
     assert_eq!(users.len(), 1);
-    let (name, age) = users.first().unwrap();
+    let (name, age) = users.pop().unwrap();
     assert_eq!(name, "steven");
     assert_eq!(age, 18);
 }
