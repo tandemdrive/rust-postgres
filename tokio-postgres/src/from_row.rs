@@ -15,9 +15,9 @@ pub trait FromRow: Sized {
 
 macro_rules! tuple_impl {
     ($($T:ident[$idx:literal]),*) => {
-        impl<$($T: postgres_types::FromSql),*> FromRow for ($($T,)*) {
+        impl<$($T: for<'a> postgres_types::FromSql<'a>),*> FromRow for ($($T,)*) {
             fn from_row(row: &Row) -> Result<Self, Error> {
-                Ok(($(row.try_get($idx)?,)*))
+                Ok(($(row.try_get::<_, $T>($idx)?,)*))
             }
         }
     };
