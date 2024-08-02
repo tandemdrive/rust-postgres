@@ -90,6 +90,16 @@ async fn query_all_as_from() {
 }
 
 #[tokio::test]
+async fn query_tuple() {
+    let mut users = query_row::<(String, i32)>().await.unwrap();
+
+    assert_eq!(users.len(), 1);
+    let (name, age) = users.pop().unwrap();
+    assert_eq!(name, "steven");
+    assert_eq!(age, 18);
+}
+
+#[tokio::test]
 async fn query_all_as_flatten() {
     #[derive(FromRow)]
     struct AgeDetails {
