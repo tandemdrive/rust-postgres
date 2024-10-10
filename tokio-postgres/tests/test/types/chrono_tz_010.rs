@@ -4,9 +4,9 @@ use crate::types::test_type;
 
 #[tokio::test]
 async fn test_tz() {
-    fn make_check(time: &str) -> (Option<chrono_tz_09::Tz>, &str) {
+    fn make_check(time: &str) -> (Option<chrono_tz_010::Tz>, &str) {
         (
-            Some(chrono_tz_09::Tz::from_str(&time[1..time.len() - 1]).unwrap()),
+            Some(chrono_tz_010::Tz::from_str(&time[1..time.len() - 1]).unwrap()),
             time,
         )
     }
