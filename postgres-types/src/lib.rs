@@ -266,8 +266,8 @@ where
 mod bit_vec_06;
 #[cfg(feature = "with-chrono-0_4")]
 mod chrono_04;
-#[cfg(feature = "with-chrono-tz-0_9")]
-mod chrono_tz_09;
+#[cfg(feature = "with-chrono-tz-0_10")]
+mod chrono_tz_010;
 #[cfg(feature = "with-cidr-0_2")]
 mod cidr_02;
 #[cfg(feature = "with-eui48-0_4")]

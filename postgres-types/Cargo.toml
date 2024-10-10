@@ -16,7 +16,7 @@ array-impls = ["array-init"]
 with-bit-vec-0_6 = ["bit-vec-06"]
 with-cidr-0_2 = ["cidr-02"]
 with-chrono-0_4 = ["chrono-04"]
-with-chrono-tz-0_9 = ["chrono-tz-09"]
+with-chrono-tz-0_10 = ["chrono-tz-010"]
 with-eui48-0_4 = ["eui48-04"]
 with-eui48-1 = ["eui48-1"]
 with-geo-types-0_6 = ["geo-types-06"]
@@ -34,7 +34,7 @@ fallible-iterator = "0.2"
 postgres-protocol = { version = "0.6.5", path = "../postgres-protocol" }
 postgres-derive = { version = "0.4.5", optional = true, path = "../postgres-derive" }
 
-chrono-tz-09 = { version = "0.9", package = "chrono-tz", optional = true }
+chrono-tz-010 = { version = "0.10", package = "chrono-tz", optional = true }
 array-init = { version = "2", optional = true }
 bit-vec-06 = { version = "0.6", package = "bit-vec", optional = true }
 chrono-04 = { version = "0.4.16", package = "chrono", default-features = false, features = ["clock"], optional = true }

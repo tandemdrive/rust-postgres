@@ -1,6 +1,6 @@
 use crate::{FromSql, ToSql};
 
-impl<'a> FromSql<'a> for chrono_tz_09::Tz {
+impl<'a> FromSql<'a> for chrono_tz_010::Tz {
     fn from_sql(
         ty: &crate::Type,
         raw: &'a [u8],
@@ -14,7 +14,7 @@ impl<'a> FromSql<'a> for chrono_tz_09::Tz {
     }
 }
 
-impl ToSql for chrono_tz_09::Tz {
+impl ToSql for chrono_tz_010::Tz {
     fn to_sql(
         &self,
         ty: &crate::Type,
