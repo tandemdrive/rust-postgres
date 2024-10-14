@@ -376,6 +376,33 @@ pub enum Kind {
     Timeout,
 }
 
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Kind::Io(err) => write!(f, "error communicating with the server: {err}"),
+            Kind::UnexpectedMessage => f.write_str("unexpected message from server"),
+            Kind::Tls(err) => write!(f, "error performing TLS handshake: {err}"),
+            Kind::ToSql(idx, err) => write!(f, "error serializing parameter {idx}: {err}"),
+            Kind::FromSql(idx, err) => write!(f, "error deserializing column {idx}: {err}"),
+            Kind::Column(column) => write!(f, "invalid column `{column}`"),
+            Kind::Parameters(real, expected) => {
+                write!(f, "expected {expected} parameters but got {real}")
+            }
+            Kind::Closed => f.write_str("connection closed"),
+            Kind::Db(err) => write!(f, "db error: {err}"),
+            Kind::Parse(err) => write!(f, "error parsing response from server: {err}"),
+            Kind::Encode(err) => write!(f, "error encoding message to server: {err}"),
+            Kind::Authentication(err) => write!(f, "authentication error: {err}"),
+            Kind::ConfigParse(err) => write!(f, "invalid connection string: {err}"),
+            Kind::Config(err) => write!(f, "invalid configuration: {err}"),
+            #[cfg(feature = "runtime")]
+            Kind::Connect(err) => write!(f, "error connecting to server: {err}"),
+            Kind::RowCount => f.write_str("query returned an unexpected number of rows"),
+            Kind::Timeout => f.write_str("timeout waiting for server"),
+        }
+    }
+}
+
 struct ErrorInner {
     kind: Kind,
     #[cfg(feature = "tracing-error")]
@@ -399,28 +426,7 @@ impl fmt::Debug for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.0.kind {
-            Kind::Io(err) => write!(f, "error communicating with the server: {err}")?,
-            Kind::UnexpectedMessage => f.write_str("unexpected message from server")?,
-            Kind::Tls(err) => write!(f, "error performing TLS handshake: {err}")?,
-            Kind::ToSql(idx, err) => write!(f, "error serializing parameter {idx}: {err}")?,
-            Kind::FromSql(idx, err) => write!(f, "error deserializing column {idx}: {err}")?,
-            Kind::Column(column) => write!(f, "invalid column `{column}`")?,
-            Kind::Parameters(real, expected) => {
-                write!(f, "expected {expected} parameters but got {real}")?
-            }
-            Kind::Closed => f.write_str("connection closed")?,
-            Kind::Db(err) => write!(f, "db error: {err}")?,
-            Kind::Parse(err) => write!(f, "error parsing response from server: {err}")?,
-            Kind::Encode(err) => write!(f, "error encoding message to server: {err}")?,
-            Kind::Authentication(err) => write!(f, "authentication error: {err}")?,
-            Kind::ConfigParse(err) => write!(f, "invalid connection string: {err}")?,
-            Kind::Config(err) => write!(f, "invalid configuration: {err}")?,
-            #[cfg(feature = "runtime")]
-            Kind::Connect(err) => write!(f, "error connecting to server: {err}")?,
-            Kind::RowCount => f.write_str("query returned an unexpected number of rows")?,
-            Kind::Timeout => f.write_str("timeout waiting for server")?,
-        };
+        write!(f, "{}", &self.0.kind)?;
 
         #[cfg(feature = "tracing-error")]
         {
