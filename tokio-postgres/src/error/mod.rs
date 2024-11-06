@@ -381,7 +381,7 @@ pub enum Kind {
     Timeout,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 /// A enum to be able to indicate the scenario for the row count error.
 pub enum RowCountCategory {
     /// On
