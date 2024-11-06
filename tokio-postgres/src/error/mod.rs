@@ -371,9 +371,38 @@ pub enum Kind {
     #[cfg(feature = "runtime")]
     Connect(io::Error),
     /// A query returned an unexpected number of rows.
-    RowCount,
+    RowCount {
+        /// An indication for the expected number of rows.
+        expected: RowCountCategory,
+        /// An indication for the number of rows in the result set.
+        got: RowCountCategory,
+    },
     /// A timeout while waiting for the server.
     Timeout,
+}
+
+#[derive(Debug, Clone, Copy)]
+/// A enum to be able to indicate the scenario for the row count error.
+pub enum RowCountCategory {
+    /// On
+    One,
+    /// An optional row.
+    ZeroOrOne,
+    /// More than one row.
+    MoreThanOne,
+    /// No result rows.
+    Zero,
+}
+
+impl fmt::Display for RowCountCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RowCountCategory::One => f.write_str("one"),
+            RowCountCategory::ZeroOrOne => f.write_str("zero or one"),
+            RowCountCategory::MoreThanOne => f.write_str("more than one"),
+            RowCountCategory::Zero => f.write_str("zero"),
+        }
+    }
 }
 
 impl fmt::Display for Kind {
@@ -397,7 +426,10 @@ impl fmt::Display for Kind {
             Kind::Config(err) => write!(f, "invalid configuration: {err}"),
             #[cfg(feature = "runtime")]
             Kind::Connect(err) => write!(f, "error connecting to server: {err}"),
-            Kind::RowCount => f.write_str("query returned an unexpected number of rows"),
+            Kind::RowCount { expected, got } => write!(
+                f,
+                "query returned an unexpected number of rows, expected {expected}, got {got}",
+            ),
             Kind::Timeout => f.write_str("timeout waiting for server"),
         }
     }
@@ -467,7 +499,7 @@ impl StdError for Error {
             Kind::Config(err) => Some(&**err as _),
             #[cfg(feature = "runtime")]
             Kind::Connect(err) => Some(err as _),
-            Kind::RowCount => None,
+            Kind::RowCount { .. } => None,
             Kind::Timeout => None,
         }
     }
@@ -493,7 +525,7 @@ impl Error {
             Kind::Config(err) => Some(err),
             #[cfg(feature = "runtime")]
             Kind::Connect(err) => Some(Box::new(err)),
-            Kind::RowCount => None,
+            Kind::RowCount { .. } => None,
             Kind::Timeout => None,
         }
     }
@@ -611,8 +643,8 @@ impl Error {
         Error::new(Kind::Config(e))
     }
 
-    pub(crate) fn row_count() -> Error {
-        Error::new(Kind::RowCount)
+    pub(crate) fn row_count(expected: RowCountCategory, got: RowCountCategory) -> Error {
+        Error::new(Kind::RowCount { expected, got })
     }
 
     #[cfg(feature = "runtime")]
