@@ -339,11 +339,19 @@ impl Client {
 
         let row = match stream.try_next().await? {
             Some(row) => row,
-            None => return Err(Error::row_count()),
+            None => {
+                return Err(Error::row_count(
+                    crate::error::RowCountCategory::One,
+                    crate::error::RowCountCategory::Zero,
+                ))
+            }
         };
 
         if stream.try_next().await?.is_some() {
-            return Err(Error::row_count());
+            return Err(Error::row_count(
+                crate::error::RowCountCategory::One,
+                crate::error::RowCountCategory::MoreThanOne,
+            ));
         }
 
         Ok(row)
@@ -418,7 +426,10 @@ impl Client {
         };
 
         if stream.try_next().await?.is_some() {
-            return Err(Error::row_count());
+            return Err(Error::row_count(
+                crate::error::RowCountCategory::ZeroOrOne,
+                crate::error::RowCountCategory::MoreThanOne,
+            ));
         }
 
         Ok(Some(row))
