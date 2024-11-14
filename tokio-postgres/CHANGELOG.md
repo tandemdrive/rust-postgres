@@ -1,14 +1,13 @@
 # Change Log
 
-## Unreleased
+## TandemDrive
 
 * Disable `rustc-serialize` compatibility of `eui48-1` dependency
 * Remove tests for `eui48-04`
 * Add `table_oid` and `field_id` fields to `Columns` struct of prepared statements.
-
-## Added
-
 * Added support for `chrono-tz` 0.9 via the `chrono-tz-0_9` feature.
+
+## Unreleased
 
 ## v0.7.10 - 2023-08-25
 
