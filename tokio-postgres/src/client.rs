@@ -35,12 +35,10 @@ use std::task::{Context, Poll};
 #[cfg(feature = "runtime")]
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
-
 pub struct Responses {
     receiver: mpsc::Receiver<BackendMessages>,
     cur: BackendMessages,
 }
-
 impl Responses {
     pub fn poll_next(&mut self, cx: &mut Context<'_>) -> Poll<Result<Message, Error>> {
         loop {
@@ -61,9 +59,10 @@ impl Responses {
         future::poll_fn(|cx| self.poll_next(cx)).await
     }
 }
-
 /// A cache of type info and prepared statements for fetching type info
+
 /// (corresponding to the queries in the [prepare](prepare) module).
+
 #[derive(Default)]
 struct CachedTypeInfo {
     /// A statement for basic information for a type from its
@@ -81,7 +80,6 @@ struct CachedTypeInfo {
     /// Cache of types already looked up.
     types: HashMap<Oid, Type>,
 }
-
 pub struct InnerClient {
     sender: mpsc::UnboundedSender<Request>,
     cached_typeinfo: Mutex<CachedTypeInfo>,
@@ -89,7 +87,6 @@ pub struct InnerClient {
     /// A buffer to use when writing out postgres commands.
     buffer: Mutex<BytesMut>,
 }
-
 impl InnerClient {
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(self, messages)))]
     pub fn send(&self, messages: RequestMessages) -> Result<Responses, Error> {
@@ -153,7 +150,6 @@ impl InnerClient {
         r
     }
 }
-
 #[cfg(feature = "runtime")]
 #[derive(Clone)]
 pub(crate) struct SocketConfig {
@@ -164,7 +160,6 @@ pub(crate) struct SocketConfig {
     pub tcp_user_timeout: Option<Duration>,
     pub keepalive: Option<KeepaliveConfig>,
 }
-
 #[cfg(feature = "runtime")]
 #[derive(Clone)]
 pub(crate) enum Addr {
@@ -172,8 +167,21 @@ pub(crate) enum Addr {
     #[cfg(unix)]
     Unix(PathBuf),
 }
-
 /// An asynchronous PostgreSQL client.
+
+///
+use crate::codec::BackendMessages;
+#[cfg(feature = "runtime")]
+#[cfg(feature = "runtime")]
+#[cfg(feature = "runtime")]
+use postgres_protocol::message::backend::Message;
+#[cfg(feature = "runtime")]
+#[cfg(feature = "runtime")]
+#[cfg(feature = "runtime")]
+#[cfg(feature = "runtime")]
+#[derive(Clone)]
+#[cfg(feature = "runtime")]
+#[derive(Clone)]
 ///
 /// The client is one half of what is returned when a connection is established. Users interact with the database
 /// through this client object.
@@ -215,20 +223,26 @@ impl Client {
     pub(crate) fn set_socket_config(&mut self, socket_config: SocketConfig) {
         self.socket_config = Some(socket_config);
     }
-
     /// Creates a new prepared statement.
+
     ///
+
     /// Prepared statements can be executed repeatedly, and may contain query parameters (indicated by `$1`, `$2`, etc),
+
     /// which are set when executed. Prepared statements can only be used with the connection that created them.
+
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn prepare(&self, query: &str) -> Result<Statement, Error> {
         prepare::prepare(&self.inner, query, &[]).await
     }
-
     /// Like `prepare`, but allows the types of query parameters to be explicitly specified.
+
     ///
+
     /// The list of types may be smaller than the number of parameters - the types of the remaining parameters will be
+
     /// inferred. For example, `client.prepare_typed(query, &[])` is equivalent to `client.prepare(query)`.
+
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn prepare_typed(
         &self,
@@ -237,15 +251,22 @@ impl Client {
     ) -> Result<Statement, Error> {
         prepare::prepare(&self.inner, query, parameter_types).await
     }
-
     /// Executes a statement, returning a vector of the resulting rows.
+
     ///
+
     /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
     /// provided, 1-indexed.
+
     ///
+
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
     /// with the `prepare` method.
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query<T>(
         &self,
@@ -257,8 +278,8 @@ impl Client {
     {
         self.query_intern(statement, params).await
     }
-
     /// An uninstrumented version of `query`.
+
     async fn query_intern<T>(
         &self,
         statement: &T,
@@ -273,8 +294,8 @@ impl Client {
             .try_collect()
             .await
     }
-
     /// Returns a vector of `T`s
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_as<R: FromRow, T>(
         &self,
@@ -287,8 +308,8 @@ impl Client {
         let rows = self.query_intern(statement, params).await?;
         rows.iter().map(|x| FromRow::from_row(x)).collect()
     }
-
     /// Returns a vector of scalars
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_scalar<R: FromSqlOwned, T>(
         &self,
@@ -301,17 +322,26 @@ impl Client {
         let rows = self.query_intern(statement, params).await?;
         rows.into_iter().map(|r| r.try_get(0)).collect()
     }
-
     /// Executes a statement which returns a single row, returning it.
+
     ///
+
     /// Returns an error if the query does not return exactly one row.
+
     ///
+
     /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
     /// provided, 1-indexed.
+
     ///
+
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
     /// with the `prepare` method.
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one<T>(
         &self,
@@ -333,31 +363,12 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(&self.inner).await?;
-        let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
-        pin_mut!(stream);
-
-        let row = match stream.try_next().await? {
-            Some(row) => row,
-            None => {
-                return Err(Error::row_count(
-                    crate::error::RowCountCategory::One,
-                    crate::error::RowCountCategory::Zero,
-                ))
-            }
-        };
-
-        if stream.try_next().await?.is_some() {
-            return Err(Error::row_count(
-                crate::error::RowCountCategory::One,
-                crate::error::RowCountCategory::MoreThanOne,
-            ));
-        }
-
-        Ok(row)
+        self.query_opt(statement, params)
+            .await
+            .and_then(|res| res.ok_or_else(Error::row_count))
     }
-
     /// Like [`Client::query_one`] but converts row to `T`.
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one_as<R: FromRow, T>(
         &self,
@@ -370,8 +381,8 @@ impl Client {
         let row = self.query_one_intern(statement, params).await?;
         FromRow::from_row(&row)
     }
-
     /// Like [`Client::query_one_scalar`] but returns one scalar
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_one_scalar<R: FromSqlOwned, T>(
         &self,
@@ -384,17 +395,26 @@ impl Client {
         let row = self.query_one_intern(statement, params).await?;
         row.try_get(0)
     }
-
     /// Executes a statements which returns zero or one rows, returning it.
+
     ///
+
     /// Returns an error if the query returns more than one row.
+
     ///
+
     /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
     /// provided, 1-indexed.
+
     ///
+
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
     /// with the `prepare` method.
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt<T>(
         &self,
@@ -416,26 +436,31 @@ impl Client {
     where
         T: ?Sized + ToStatement + fmt::Debug,
     {
-        let statement = statement.__convert().into_statement(&self.inner).await?;
-        let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
+        let stream = self.query_raw(statement, slice_iter(params)).await?;
         pin_mut!(stream);
 
-        let row = match stream.try_next().await? {
-            Some(row) => row,
-            None => return Ok(None),
-        };
+        let mut first = None;
 
-        if stream.try_next().await?.is_some() {
-            return Err(Error::row_count(
-                crate::error::RowCountCategory::ZeroOrOne,
-                crate::error::RowCountCategory::MoreThanOne,
-            ));
+        // Originally this was two calls to `try_next().await?`,
+        // once for the first element, and second to error if more than one.
+        //
+        // However, this new form with only one .await in a loop generates
+        // slightly smaller codegen/stack usage for the resulting future.
+        while let Some(row) = stream.try_next().await? {
+            if first.is_some() {
+                return Err(Error::row_count(
+                    crate::error::RowCountCategory::ZeroOrOne,
+                    crate::error::RowCountCategory::MoreThanOne,
+                ));
+            }
+
+            first = Some(row);
         }
 
-        Ok(Some(row))
+        Ok(first)
     }
-
     /// Like [`Client::query_opt`] but converts row into `T`
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt_as<R: FromRow, T>(
         &self,
@@ -448,8 +473,8 @@ impl Client {
         let row = self.query_opt_intern(statement, params).await?;
         row.map(|x| FromRow::from_row(&x)).transpose()
     }
-
     /// Like [`Client::query_opt`] but returns an optional scalar
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_opt_scalar<R: FromSqlOwned, T>(
         &self,
@@ -462,42 +487,42 @@ impl Client {
         let row = self.query_opt_intern(statement, params).await?;
         row.map(|x| (x.try_get::<_, R>(0))).transpose()
     }
-
     /// The maximally flexible version of [`query`].
+
     ///
+
     /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
     /// provided, 1-indexed.
+
     ///
+
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
     /// with the `prepare` method.
+
     ///
+
     /// [`query`]: #method.query
+
     ///
-    /// # Examples
+
     ///
-    /// ```no_run
-    /// # async fn async_main(client: &tokio_postgres::Client) -> Result<(), tokio_postgres::Error> {
-    /// use tokio_postgres::types::ToSql;
-    /// use futures_util::{pin_mut, TryStreamExt};
+
     ///
+
     /// let params: Vec<String> = vec![
+
     ///     "first param".into(),
+
     ///     "second param".into(),
-    /// ];
+
     /// let mut it = client.query_raw(
-    ///     "SELECT foo FROM bar WHERE biz = $1 AND baz = $2",
-    ///     params,
-    /// ).await?;
+
     ///
-    /// pin_mut!(it);
-    /// while let Some(row) = it.try_next().await? {
-    ///     let foo: i32 = row.get("foo");
-    ///     println!("foo: {}", foo);
-    /// }
-    /// # Ok(())
-    /// # }
-    /// ```
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn query_raw<T, P, I>(&self, statement: &T, params: I) -> Result<RowStream, Error>
     where
@@ -509,8 +534,8 @@ impl Client {
         let statement = statement.__convert().into_statement(&self.inner).await?;
         query::query(&self.inner, statement, params).await
     }
-
     /// Returns a stream of rows
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream<T>(
         &self,
@@ -524,8 +549,8 @@ impl Client {
         let stream = query::query(&self.inner, statement, slice_iter(params)).await?;
         Ok(stream)
     }
-
     /// Returns a stream of `T`s
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream_as<R: FromRow, T>(
         &self,
@@ -541,17 +566,26 @@ impl Client {
             .map(move |x| x.and_then(|x| FromRow::from_row(&x)))
             .boxed())
     }
-
     /// Executes a statement, returning the number of rows modified.
+
     ///
+
     /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
     /// provided, 1-indexed.
+
     ///
+
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
     /// with the `prepare` method.
+
     ///
+
     /// If the statement does not modify any rows (e.g. `SELECT`), 0 is returned.
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn execute<T>(
         &self,
@@ -564,17 +598,26 @@ impl Client {
         let statement = statement.__convert().into_statement(&self.inner).await?;
         query::execute(self.inner(), statement, slice_iter(params)).await
     }
-
     /// The maximally flexible version of [`execute`].
+
     ///
+
     /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
     /// provided, 1-indexed.
+
     ///
+
     /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
     /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
     /// with the `prepare` method.
+
     ///
+
     /// [`execute`]: #method.execute
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn execute_raw<T, P, I>(&self, statement: &T, params: I) -> Result<u64, Error>
     where
@@ -586,11 +629,14 @@ impl Client {
         let statement = statement.__convert().into_statement(&self.inner).await?;
         query::execute(self.inner(), statement, params).await
     }
-
     /// Executes a `COPY FROM STDIN` statement, returning a sink used to write the copy data.
+
     ///
+
     /// PostgreSQL does not support parameters in `COPY` statements, so this method does not take any. The copy *must*
+
     /// be explicitly completed via the `Sink::close` or `finish` methods. If it is not, the copy will be aborted.
+
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn copy_in<T, U>(&self, statement: &T) -> Result<CopyInSink<U>, Error>
     where
@@ -600,10 +646,12 @@ impl Client {
         let statement = statement.__convert().into_statement(&self.inner).await?;
         copy_in::copy_in(self.inner(), statement).await
     }
-
     /// Executes a `COPY TO STDOUT` statement, returning a stream of the resulting data.
+
     ///
+
     /// PostgreSQL does not support parameters in `COPY` statements, so this method does not take any.
+
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn copy_out<T>(&self, statement: &T) -> Result<CopyOutStream, Error>
     where
@@ -612,97 +660,87 @@ impl Client {
         let statement = statement.__convert().into_statement(&self.inner).await?;
         copy_out::copy_out(self.inner(), statement).await
     }
-
     /// Executes a sequence of SQL statements using the simple query protocol, returning the resulting rows.
+
     ///
+
     /// Statements should be separated by semicolons. If an error occurs, execution of the sequence will stop at that
+
     /// point. The simple query protocol returns the values in rows as strings rather than in their binary encodings,
+
     /// so the associated row type doesn't work with the `FromSql` trait. Rather than simply returning a list of the
+
     /// rows, this method returns a list of an enum which indicates either the completion of one of the commands,
+
     /// or a row of data. This preserves the framing between the separate statements in the request.
+
     ///
+
     /// # Warning
+
     ///
+
     /// Prepared statements should be use for any query which contains user-specified data, as they provided the
+
     /// functionality to safely embed that data in the request. Do not form statements via string concatenation and pass
+
     /// them to this method!
+
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn simple_query(&self, query: &str) -> Result<Vec<SimpleQueryMessage>, Error> {
         self.simple_query_raw(query).await?.try_collect().await
     }
-
     pub(crate) async fn simple_query_raw(&self, query: &str) -> Result<SimpleQueryStream, Error> {
         simple_query::simple_query(self.inner(), query).await
     }
-
     /// Executes a sequence of SQL statements using the simple query protocol.
+
     ///
+
     /// Statements should be separated by semicolons. If an error occurs, execution of the sequence will stop at that
+
     /// point. This is intended for use when, for example, initializing a database schema.
+
     ///
+
     /// # Warning
+
     ///
+
     /// Prepared statements should be use for any query which contains user-specified data, as they provided the
+
     /// functionality to safely embed that data in the request. Do not form statements via string concatenation and pass
+
     /// them to this method!
+
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub async fn batch_execute(&self, query: &str) -> Result<(), Error> {
         simple_query::batch_execute(self.inner(), query).await
     }
-
     /// Begins a new database transaction.
+
     ///
+
     /// The transaction will roll back by default - use the `commit` method to commit it.
+
     pub async fn transaction(&mut self) -> Result<Transaction<'_>, Error> {
-        struct RollbackIfNotDone<'me> {
-            client: &'me Client,
-            done: bool,
-        }
-
-        impl<'a> Drop for RollbackIfNotDone<'a> {
-            fn drop(&mut self) {
-                if self.done {
-                    return;
-                }
-
-                let buf = self.client.inner().with_buf(|buf| {
-                    frontend::query("ROLLBACK", buf).unwrap();
-                    buf.split().freeze()
-                });
-                let _ = self
-                    .client
-                    .inner()
-                    .send(RequestMessages::Single(FrontendMessage::Raw(buf)));
-            }
-        }
-
-        // This is done, as `Future` created by this method can be dropped after
-        // `RequestMessages` is synchronously send to the `Connection` by
-        // `batch_execute()`, but before `Responses` is asynchronously polled to
-        // completion. In that case `Transaction` won't be created and thus
-        // won't be rolled back.
-        {
-            let mut cleaner = RollbackIfNotDone {
-                client: self,
-                done: false,
-            };
-            self.batch_execute("BEGIN").await?;
-            cleaner.done = true;
-        }
-
-        Ok(Transaction::new(self))
+        self.build_transaction().start().await
     }
-
     /// Returns a builder for a transaction with custom settings.
+
     ///
+
     /// Unlike the `transaction` method, the builder can be used to control the transaction's isolation level and other
+
     /// attributes.
+
     pub fn build_transaction(&mut self) -> TransactionBuilder<'_> {
         TransactionBuilder::new(self)
     }
-
     /// Constructs a cancellation token that can later be used to request cancellation of a query running on the
+
     /// connection associated with this client.
+
     pub fn cancel_token(&self) -> CancelToken {
         CancelToken {
             #[cfg(feature = "runtime")]
@@ -712,13 +750,18 @@ impl Client {
             secret_key: self.secret_key,
         }
     }
-
     /// Attempts to cancel an in-progress query.
+
     ///
+
     /// The server provides no information about whether a cancellation attempt was successful or not. An error will
+
     /// only be returned if the client was unable to connect to the database.
+
     ///
+
     /// Requires the `runtime` Cargo feature (enabled by default).
+
     #[cfg(feature = "runtime")]
     #[deprecated(since = "0.6.0", note = "use Client::cancel_token() instead")]
     pub async fn cancel_query<T>(&self, tls: T) -> Result<(), Error>
@@ -727,9 +770,10 @@ impl Client {
     {
         self.cancel_token().cancel_query(tls).await
     }
-
     /// Like `cancel_query`, but uses a stream which is already connected to the server rather than opening a new
+
     /// connection itself.
+
     #[deprecated(since = "0.6.0", note = "use Client::cancel_token() instead")]
     pub async fn cancel_query_raw<S, T>(&self, stream: S, tls: T) -> Result<(), Error>
     where
@@ -738,17 +782,318 @@ impl Client {
     {
         self.cancel_token().cancel_query_raw(stream, tls).await
     }
-
     /// Clears the client's type information cache.
+
     ///
+
     /// When user-defined types are used in a query, the client loads their definitions from the database and caches
+
     /// them for the lifetime of the client. If those definitions are changed in the database, this method can be used
+
     /// to flush the local cache and allow the new, updated definitions to be loaded.
+
     pub fn clear_type_cache(&self) {
         self.inner().clear_type_cache();
     }
-
     /// Determines if the connection to the server has already closed.
+
+    ///
+
+    #[cfg(feature = "runtime")]
+    ///
+
+    ///
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
+    /// provided, 1-indexed.
+
+    ///
+
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
+    /// with the `prepare` method.
+
+    ///
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
+    /// provided, 1-indexed.
+
+    ///
+
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
+    /// with the `prepare` method.
+
+    ///
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
+    /// provided, 1-indexed.
+
+    ///
+
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
+    /// with the `prepare` method.
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
+    /// provided, 1-indexed.
+
+    ///
+
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
+    /// with the `prepare` method.
+
+    ///
+
+    ///
+
+    /// # Examples
+
+    ///
+
+    /// ```no_run
+
+    /// # async fn async_main(client: &tokio_postgres::Client) -> Result<(), tokio_postgres::Error> {
+
+    /// use futures_util::{pin_mut, TryStreamExt};
+
+    ///
+
+    /// ];
+
+    ///     "SELECT foo FROM bar WHERE biz = $1 AND baz = $2",
+
+    ///     params,
+
+    /// ).await?;
+
+    ///
+
+    /// pin_mut!(it);
+
+    /// while let Some(row) = it.try_next().await? {
+
+    ///     let foo: i32 = row.get("foo");
+
+    ///     println!("foo: {}", foo);
+
+    /// }
+
+    /// # Ok(())
+
+    /// # }
+
+    /// ```
+
+    /// Like `query`, but requires the types of query parameters to be explicitly specified.
+
+    ///
+
+    /// Compared to `query`, this method allows performing queries without three round trips (for
+
+    /// prepare, execute, and close) by requiring the caller to specify parameter values along with
+
+    /// their Postgres type. Thus, this is suitable in environments where prepared statements aren't
+
+    /// supported (such as Cloudflare Workers with Hyperdrive).
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the
+
+    /// parameter of the list provided, 1-indexed.
+
+    pub async fn query_typed(
+        &self,
+        query: &str,
+        params: &[(&(dyn ToSql + Sync), Type)],
+    ) -> Result<Vec<Row>, Error> {
+        self.query_typed_raw(query, params.iter().map(|(v, t)| (*v, t.clone())))
+            .await?
+            .try_collect()
+            .await
+    }
+    /// The maximally flexible version of [`query_typed`].
+
+    ///
+
+    /// Compared to `query`, this method allows performing queries without three round trips (for
+
+    /// prepare, execute, and close) by requiring the caller to specify parameter values along with
+
+    /// their Postgres type. Thus, this is suitable in environments where prepared statements aren't
+
+    /// supported (such as Cloudflare Workers with Hyperdrive).
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the
+
+    /// parameter of the list provided, 1-indexed.
+
+    ///
+
+    /// [`query_typed`]: #method.query_typed
+
+    ///
+
+    /// # Examples
+
+    ///
+
+    /// ```no_run
+
+    /// # async fn async_main(client: &tokio_postgres::Client) -> Result<(), tokio_postgres::Error> {
+
+    /// use futures_util::{pin_mut, TryStreamExt};
+
+    /// use tokio_postgres::types::Type;
+
+    ///
+
+    /// let params: Vec<(String, Type)> = vec![
+
+    ///     ("first param".into(), Type::TEXT),
+
+    ///     ("second param".into(), Type::TEXT),
+
+    /// ];
+
+    /// let mut it = client.query_typed_raw(
+
+    ///     "SELECT foo FROM bar WHERE biz = $1 AND baz = $2",
+
+    ///     params,
+
+    /// ).await?;
+
+    ///
+
+    /// pin_mut!(it);
+
+    /// while let Some(row) = it.try_next().await? {
+
+    ///     let foo: i32 = row.get("foo");
+
+    ///     println!("foo: {}", foo);
+
+    /// }
+
+    /// # Ok(())
+
+    /// # }
+
+    /// ```
+
+    pub async fn query_typed_raw<P, I>(&self, query: &str, params: I) -> Result<RowStream, Error>
+    where
+        P: BorrowToSql,
+        I: IntoIterator<Item = (P, Type)>,
+    {
+        query::query_typed(&self.inner, query, params).await
+    }
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
+    /// provided, 1-indexed.
+
+    ///
+
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
+    /// with the `prepare` method.
+
+    ///
+
+    ///
+
+    /// A statement may contain parameters, specified by `$n`, where `n` is the index of the parameter of the list
+
+    /// provided, 1-indexed.
+
+    ///
+
+    /// The `statement` argument can either be a `Statement`, or a raw query string. If the same statement will be
+
+    /// repeatedly executed (perhaps with different query parameters), consider preparing the statement up front
+
+    /// with the `prepare` method.
+
+    ///
+
+    ///
+
+    ///
+
+    ///
+
+    /// Statements should be separated by semicolons. If an error occurs, execution of the sequence will stop at that
+
+    ///
+
+    /// # Warning
+
+    ///
+
+    /// Prepared statements should be use for any query which contains user-specified data, as they provided the
+
+    /// functionality to safely embed that data in the request. Do not form statements via string concatenation and pass
+
+    /// them to this method!
+
+    ///
+
+    /// Statements should be separated by semicolons. If an error occurs, execution of the sequence will stop at that
+
+    ///
+
+    /// # Warning
+
+    ///
+
+    /// Prepared statements should be use for any query which contains user-specified data, as they provided the
+
+    /// functionality to safely embed that data in the request. Do not form statements via string concatenation and pass
+
+    /// them to this method!
+
+    ///
+
+    ///
+
+    ///
+
+    ///
+
+    #[cfg(feature = "runtime")]
+    #[deprecated(since = "0.6.0", note = "use Client::cancel_token() instead")]
+    #[deprecated(since = "0.6.0", note = "use Client::cancel_token() instead")]
+    ///
+
     ///
     /// In that case, all future queries will fail.
     pub fn is_closed(&self) -> bool {

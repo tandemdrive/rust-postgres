@@ -8,6 +8,26 @@
 
 * Added support for `chrono-tz` 0.9 via the `with-chrono-tz-0_9` feature.
 
+## Unreleased
+
+## v0.2.8 - 2024-09-15
+
+### Added
+
+* Added support for `jiff` 0.1 via the `with-jiff-01` feature.
+
+## v0.2.7 - 2024-07-21
+
+### Added
+
+* Added `Default` implementation for `Json`.
+* Added a `js` feature for WASM compatibility.
+
+### Changed
+
+* `FromStr` implementation for `PgLsn` no longer allocates a `Vec` when splitting an lsn string on it's `/`.
+* The `eui48-1` feature no longer enables default features of the `eui48` library.
+
 ## v0.2.6 - 2023-08-19
 
 ### Fixed

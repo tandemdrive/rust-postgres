@@ -82,6 +82,7 @@ async fn in_transaction(client: &Client) -> bool {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn plain_password_missing() {
     connect_raw("user=pass_user dbname=postgres")
         .await
@@ -89,6 +90,7 @@ async fn plain_password_missing() {
         .unwrap();
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn plain_password_wrong() {
     match connect_raw("user=pass_user password=foo dbname=postgres").await {
@@ -99,10 +101,12 @@ async fn plain_password_wrong() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn plain_password_ok() {
     connect("user=pass_user password=password dbname=postgres").await;
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn md5_password_missing() {
     connect_raw("user=md5_user dbname=postgres")
@@ -111,6 +115,7 @@ async fn md5_password_missing() {
         .unwrap();
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn md5_password_wrong() {
     match connect_raw("user=md5_user password=foo dbname=postgres").await {
@@ -121,10 +126,12 @@ async fn md5_password_wrong() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn md5_password_ok() {
     connect("user=md5_user password=password dbname=postgres").await;
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn scram_password_missing() {
     connect_raw("user=scram_user dbname=postgres")
@@ -133,6 +140,7 @@ async fn scram_password_missing() {
         .unwrap();
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn scram_password_wrong() {
     match connect_raw("user=scram_user password=foo dbname=postgres").await {
@@ -143,10 +151,12 @@ async fn scram_password_wrong() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn scram_password_ok() {
     connect("user=scram_user password=password dbname=postgres").await;
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn pipelined_prepare() {
     let client = connect("user=postgres").await;
@@ -163,6 +173,7 @@ async fn pipelined_prepare() {
     assert_eq!(statement2.columns()[0].type_(), &Type::INT8);
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn insert_select() {
     let client = connect("user=postgres").await;
@@ -187,6 +198,7 @@ async fn insert_select() {
     assert_eq!(rows[1].get::<_, &str>(1), "bob");
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn custom_enum() {
     let client = connect("user=postgres").await;
@@ -217,6 +229,7 @@ async fn custom_enum() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn custom_domain() {
     let client = connect("user=postgres").await;
 
@@ -232,6 +245,7 @@ async fn custom_domain() {
     assert_eq!(&Kind::Domain(Type::BYTEA), ty.kind());
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn custom_array() {
     let client = connect("user=postgres").await;
@@ -249,6 +263,7 @@ async fn custom_array() {
     }
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn custom_composite() {
     let client = connect("user=postgres").await;
@@ -282,6 +297,7 @@ async fn custom_composite() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn custom_range() {
     let client = connect("user=postgres").await;
 
@@ -302,6 +318,7 @@ async fn custom_range() {
     assert_eq!(&Kind::Range(Type::FLOAT8), ty.kind());
 }
 
+#[tokio::test]
 #[tokio::test]
 #[allow(clippy::get_first)]
 async fn simple_query() {
@@ -328,6 +345,13 @@ async fn simple_query() {
         _ => panic!("unexpected message"),
     }
     match &messages[2] {
+        SimpleQueryMessage::RowDescription(columns) => {
+            assert_eq!(columns.get(0).map(|c| c.name()), Some("id"));
+            assert_eq!(columns.get(1).map(|c| c.name()), Some("name"));
+        }
+        _ => panic!("unexpected message"),
+    }
+    match &messages[3] {
         SimpleQueryMessage::Row(row) => {
             assert_eq!(row.columns().first().map(|c| c.name()), Some("id"));
             assert_eq!(row.columns().get(1).map(|c| c.name()), Some("name"));
@@ -336,7 +360,7 @@ async fn simple_query() {
         }
         _ => panic!("unexpected message"),
     }
-    match &messages[3] {
+    match &messages[4] {
         SimpleQueryMessage::Row(row) => {
             assert_eq!(row.columns().first().map(|c| c.name()), Some("id"));
             assert_eq!(row.columns().get(1).map(|c| c.name()), Some("name"));
@@ -345,13 +369,14 @@ async fn simple_query() {
         }
         _ => panic!("unexpected message"),
     }
-    match messages[4] {
+    match messages[5] {
         SimpleQueryMessage::CommandComplete(2) => {}
         _ => panic!("unexpected message"),
     }
-    assert_eq!(messages.len(), 5);
+    assert_eq!(messages.len(), 6);
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn cancel_query_raw() {
     let client = connect("user=postgres").await;
@@ -369,6 +394,7 @@ async fn cancel_query_raw() {
     }
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn transaction_commit() {
     let mut client = connect("user=postgres").await;
@@ -398,6 +424,7 @@ async fn transaction_commit() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn transaction_rollback() {
     let mut client = connect("user=postgres").await;
 
@@ -425,6 +452,7 @@ async fn transaction_rollback() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn transaction_future_cancellation() {
     let mut client = connect("user=postgres").await;
 
@@ -448,6 +476,7 @@ async fn transaction_future_cancellation() {
     }
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn transaction_commit_future_cancellation() {
     let mut client = connect("user=postgres").await;
@@ -474,6 +503,7 @@ async fn transaction_commit_future_cancellation() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn transaction_rollback_future_cancellation() {
     let mut client = connect("user=postgres").await;
 
@@ -498,6 +528,7 @@ async fn transaction_rollback_future_cancellation() {
     }
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn transaction_rollback_drop() {
     let mut client = connect("user=postgres").await;
@@ -525,6 +556,7 @@ async fn transaction_rollback_drop() {
     assert_eq!(rows.len(), 0);
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn transaction_builder() {
     let mut client = connect("user=postgres").await;
@@ -560,6 +592,7 @@ async fn transaction_builder() {
     assert_eq!(rows[0].get::<_, &str>(0), "steven");
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn copy_in() {
     let client = connect("user=postgres").await;
@@ -601,6 +634,7 @@ async fn copy_in() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn copy_in_large() {
     let client = connect("user=postgres").await;
 
@@ -637,6 +671,7 @@ async fn copy_in_large() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn copy_in_error() {
     let client = connect("user=postgres").await;
 
@@ -663,6 +698,7 @@ async fn copy_in_error() {
     assert_eq!(rows.len(), 0);
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn copy_out() {
     let client = connect("user=postgres").await;
@@ -693,6 +729,7 @@ async fn copy_out() {
     assert_eq!(&data[..], b"1\tjim\n2\tjoe\n");
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn notices() {
     let long_name = "x".repeat(65);
@@ -734,6 +771,7 @@ async fn notices() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn notifications() {
     let (client, mut connection) = connect_raw("user=postgres").await.unwrap();
 
@@ -768,6 +806,7 @@ async fn notifications() {
     assert_eq!(notifications[1].payload(), "world");
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn query_portal() {
     let mut client = connect("user=postgres").await;
@@ -812,6 +851,7 @@ async fn query_portal() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn require_channel_binding() {
     connect_raw("user=postgres channel_binding=require")
         .await
@@ -820,15 +860,18 @@ async fn require_channel_binding() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn prefer_channel_binding() {
     connect("user=postgres channel_binding=prefer").await;
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn disable_channel_binding() {
     connect("user=postgres channel_binding=disable").await;
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn check_send() {
     fn is_send<T: Send>(_: &T) {}
@@ -863,6 +906,7 @@ async fn check_send() {
 }
 
 #[tokio::test]
+#[tokio::test]
 async fn query_one() {
     let client = connect("user=postgres").await;
 
@@ -894,6 +938,7 @@ async fn query_one() {
         .unwrap();
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn query_opt() {
     let client = connect("user=postgres").await;
@@ -927,6 +972,7 @@ async fn query_opt() {
         .unwrap();
 }
 
+#[tokio::test]
 #[tokio::test]
 async fn deferred_constraint() {
     let client = connect("user=postgres").await;
@@ -998,7 +1044,6 @@ async fn query_opt_scalar() {
 
     assert_eq!(age, None);
 }
-
 #[tokio::test]
 async fn records() {
     let client = connect("user=postgres").await;
@@ -1010,7 +1055,6 @@ async fn records() {
 
     assert_eq!(record, (1, 2, 3, 4, 5));
 }
-
 #[tokio::test]
 async fn records_nested() {
     let client = connect("user=postgres").await;
@@ -1026,7 +1070,6 @@ async fn records_nested() {
         _ => panic!("value {:?} does not match", nested),
     }
 }
-
 #[tokio::test]
 async fn array_of_records() {
     let client = connect("user=postgres").await;
@@ -1038,7 +1081,6 @@ async fn array_of_records() {
 
     assert_eq!(record, vec![(1, 2), (3, 4)]);
 }
-
 #[tokio::test]
 async fn array_of_records_wrong_type() {
     let client = connect("user=postgres").await;
@@ -1052,4 +1094,122 @@ async fn array_of_records_wrong_type() {
     } else {
         panic!("wrong type should fail with wrong type error");
     };
+}
+#[tokio::test]
+async fn query_typed_no_transaction() {
+    let client = connect("user=postgres").await;
+
+    client
+        .batch_execute(
+            "
+            CREATE TEMPORARY TABLE foo (
+                name TEXT,
+                age INT
+            );
+            INSERT INTO foo (name, age) VALUES ('alice', 20), ('bob', 30), ('carol', 40);
+        ",
+        )
+        .await
+        .unwrap();
+
+    let rows: Vec<tokio_postgres::Row> = client
+        .query_typed(
+            "SELECT name, age, 'literal', 5 FROM foo WHERE name <> $1 AND age < $2 ORDER BY age",
+            &[(&"alice", Type::TEXT), (&50i32, Type::INT4)],
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(rows.len(), 2);
+    let first_row = &rows[0];
+    assert_eq!(first_row.get::<_, &str>(0), "bob");
+    assert_eq!(first_row.get::<_, i32>(1), 30);
+    assert_eq!(first_row.get::<_, &str>(2), "literal");
+    assert_eq!(first_row.get::<_, i32>(3), 5);
+
+    let second_row = &rows[1];
+    assert_eq!(second_row.get::<_, &str>(0), "carol");
+    assert_eq!(second_row.get::<_, i32>(1), 40);
+    assert_eq!(second_row.get::<_, &str>(2), "literal");
+    assert_eq!(second_row.get::<_, i32>(3), 5);
+
+    // Test for UPDATE that returns no data
+    let updated_rows = client
+        .query_typed("UPDATE foo set age = 33", &[])
+        .await
+        .unwrap();
+    assert_eq!(updated_rows.len(), 0);
+}
+#[tokio::test]
+async fn query_typed_with_transaction() {
+    let mut client = connect("user=postgres").await;
+
+    client
+        .batch_execute(
+            "
+            CREATE TEMPORARY TABLE foo (
+                name TEXT,
+                age INT
+            );
+        ",
+        )
+        .await
+        .unwrap();
+
+    let transaction = client.transaction().await.unwrap();
+
+    let rows: Vec<tokio_postgres::Row> = transaction
+        .query_typed(
+            "INSERT INTO foo (name, age) VALUES ($1, $2), ($3, $4), ($5, $6) returning name, age",
+            &[
+                (&"alice", Type::TEXT),
+                (&20i32, Type::INT4),
+                (&"bob", Type::TEXT),
+                (&30i32, Type::INT4),
+                (&"carol", Type::TEXT),
+                (&40i32, Type::INT4),
+            ],
+        )
+        .await
+        .unwrap();
+    let inserted_values: Vec<(String, i32)> = rows
+        .iter()
+        .map(|row| (row.get::<_, String>(0), row.get::<_, i32>(1)))
+        .collect();
+    assert_eq!(
+        inserted_values,
+        [
+            ("alice".to_string(), 20),
+            ("bob".to_string(), 30),
+            ("carol".to_string(), 40)
+        ]
+    );
+
+    let rows: Vec<tokio_postgres::Row> = transaction
+        .query_typed(
+            "SELECT name, age, 'literal', 5 FROM foo WHERE name <> $1 AND age < $2 ORDER BY age",
+            &[(&"alice", Type::TEXT), (&50i32, Type::INT4)],
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(rows.len(), 2);
+    let first_row = &rows[0];
+    assert_eq!(first_row.get::<_, &str>(0), "bob");
+    assert_eq!(first_row.get::<_, i32>(1), 30);
+    assert_eq!(first_row.get::<_, &str>(2), "literal");
+    assert_eq!(first_row.get::<_, i32>(3), 5);
+
+    let second_row = &rows[1];
+    assert_eq!(second_row.get::<_, &str>(0), "carol");
+    assert_eq!(second_row.get::<_, i32>(1), 40);
+    assert_eq!(second_row.get::<_, &str>(2), "literal");
+    assert_eq!(second_row.get::<_, i32>(3), 5);
+
+    // Test for UPDATE that returns no data
+    let updated_rows = transaction
+        .query_typed("UPDATE foo set age = 33", &[])
+        .await
+        .unwrap();
+    assert_eq!(updated_rows.len(), 0);
 }

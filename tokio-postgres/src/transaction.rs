@@ -249,6 +249,7 @@ impl<'a> Transaction<'a> {
     }
 
     /// Like [`Client::stream`]
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream<T>(
         &self,
@@ -260,8 +261,8 @@ impl<'a> Transaction<'a> {
     {
         self.client.stream(statement, params).await
     }
-
     /// Like [`Client::stream_as`]
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
     pub async fn stream_as<R: FromRow, T>(
         &self,
@@ -273,9 +274,27 @@ impl<'a> Transaction<'a> {
     {
         self.client.stream_as(statement, params).await
     }
-
     /// Like [`Client::execute`]
+
     #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
+    /// Like `Client::query_typed`.
+
+    pub async fn query_typed(
+        &self,
+        statement: &str,
+        params: &[(&(dyn ToSql + Sync), Type)],
+    ) -> Result<Vec<Row>, Error> {
+        self.client.query_typed(statement, params).await
+    }
+    /// Like `Client::query_typed_raw`.
+
+    pub async fn query_typed_raw<P, I>(&self, query: &str, params: I) -> Result<RowStream, Error>
+    where
+        P: BorrowToSql,
+        I: IntoIterator<Item = (P, Type)>,
+    {
+        self.client.query_typed_raw(query, params).await
+    }
     pub async fn execute<T>(
         &self,
         statement: &T,
@@ -422,8 +441,8 @@ impl<'a> Transaction<'a> {
 
     /// Like `Client::transaction`, but creates a nested transaction via a savepoint.
     pub async fn transaction(&mut self) -> Result<Transaction<'_>, Error> {
-        self._savepoint(None).await
-    }
+    self._savepoint(None).await
+}
 
     /// Like `Client::transaction`, but creates a nested transaction via a savepoint with the specified name.
     #[cfg_attr(feature = "tracing", tracing::instrument)]
@@ -449,8 +468,8 @@ impl<'a> Transaction<'a> {
 
     /// Returns a reference to the underlying `Client`.
     pub fn client(&self) -> &Client {
-        self.client
-    }
+    self.client
+}
 }
 
 impl<'a> Deref for Transaction<'a> {
