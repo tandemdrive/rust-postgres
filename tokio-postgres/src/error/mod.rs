@@ -250,10 +250,10 @@ impl DbError {
             ErrorPosition::Original(idx) => (self.statement.as_deref()?, *idx),
             ErrorPosition::Internal { position, query } => (query.as_str(), *position),
         };
-        let (first, last) = sql.split_at_checked(pos as usize)?;
+        let (first, last) = sql.split_at_checked(pos.saturating_sub(1) as usize)?;
         let first = first.lines().last().unwrap_or_default();
         let last = last.lines().next().unwrap_or_default();
-        Some(format!("{first}{{!ERROR!}}{last}"))
+        Some(format!("{first}/*ERROR =>*/{last}"))
     }
 
     /// An indication of the context in which the error occurred.
