@@ -245,24 +245,15 @@ impl DbError {
     }
 
     /// Format the position inside a single line of SQL
-    pub fn format_position(&self, w: &mut impl std::fmt::Write) -> Result<(), std::fmt::Error> {
-        if let Some(pos) = self.position() {
-            let (sql, pos) = match pos {
-                ErrorPosition::Original(idx) => {
-                    let Some(sql) = self.statement.as_deref() else {
-                        return Ok(());
-                    };
-                    (sql, *idx)
-                }
-                ErrorPosition::Internal { position, query } => (query.as_str(), *position),
-            };
-            if let Some((first, last)) = sql.split_at_checked(pos as usize) {
-                let first = first.lines().last().unwrap_or_default();
-                let last = last.lines().next().unwrap_or_default();
-                write!(w, "{first}{{!ERROR!}}{last}")?;
-            }
-        }
-        Ok(())
+    pub fn format_position(&self) -> Option<String> {
+        let (sql, pos) = match self.position()? {
+            ErrorPosition::Original(idx) => (self.statement.as_deref()?, *idx),
+            ErrorPosition::Internal { position, query } => (query.as_str(), *position),
+        };
+        let (first, last) = sql.split_at_checked(pos as usize)?;
+        let first = first.lines().last().unwrap_or_default();
+        let last = last.lines().next().unwrap_or_default();
+        Some(format!("{first}{{!ERROR!}}{last}"))
     }
 
     /// An indication of the context in which the error occurred.
@@ -338,6 +329,9 @@ impl fmt::Display for DbError {
         }
         if let Some(hint) = &self.hint {
             write!(fmt, "\nHINT: {}", hint)?;
+        }
+        if let Some(sql) = self.format_position() {
+            write!(fmt, "\nSQL: {}", sql)?;
         }
         Ok(())
     }
