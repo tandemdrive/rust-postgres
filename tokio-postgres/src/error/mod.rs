@@ -250,10 +250,24 @@ impl DbError {
             ErrorPosition::Original(idx) => (self.statement.as_deref()?, *idx),
             ErrorPosition::Internal { position, query } => (query.as_str(), *position),
         };
-        let (first, last) = sql.split_at_checked(pos.saturating_sub(1) as usize)?;
-        let first = first.lines().last().unwrap_or_default();
-        let last = last.lines().next().unwrap_or_default();
-        Some(format!("{first}/*ERROR =>*/{last}"))
+        let (before, after) = sql.split_at_checked(pos.saturating_sub(1) as usize)?;
+        let before: Vec<&str> = before.lines().collect();
+        let after: Vec<&str> = after.lines().collect();
+
+        let mut before_str = before[before.len().saturating_sub(2)..].join("\n");
+        before_str.push_str(after.first().copied().unwrap_or_default());
+
+        let after_str = after.get(1).copied().unwrap_or_default();
+
+        let indent = before.last().copied().unwrap_or_default().len();
+
+        Some(format!(
+            "{before_str}\n
+{:width$}^
+{after_str}",
+            "",
+            width = indent
+        ))
     }
 
     /// An indication of the context in which the error occurred.
@@ -331,7 +345,7 @@ impl fmt::Display for DbError {
             write!(fmt, "\nHINT: {}", hint)?;
         }
         if let Some(sql) = self.format_position() {
-            write!(fmt, "\nSQL: {}", sql)?;
+            write!(fmt, "\n{}", sql)?;
         }
         Ok(())
     }
