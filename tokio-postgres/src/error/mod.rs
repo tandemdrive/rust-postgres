@@ -83,6 +83,7 @@ pub struct DbError {
     file: Option<Box<str>>,
     line: Option<u32>,
     routine: Option<Box<str>>,
+    statement: Option<Box<str>>,
 }
 
 impl DbError {
@@ -192,6 +193,7 @@ impl DbError {
             file,
             line,
             routine,
+            statement: None,
         })
     }
 
@@ -240,6 +242,27 @@ impl DbError {
     /// or an internally generated query.
     pub fn position(&self) -> Option<&ErrorPosition> {
         self.position.as_ref()
+    }
+
+    /// Format the position inside a single line of SQL
+    pub fn format_position(&self, w: &mut impl std::fmt::Write) -> Result<(), std::fmt::Error> {
+        if let Some(pos) = self.position() {
+            let (sql, pos) = match pos {
+                ErrorPosition::Original(idx) => {
+                    let Some(sql) = self.statement.as_deref() else {
+                        return Ok(());
+                    };
+                    (sql, *idx)
+                }
+                ErrorPosition::Internal { position, query } => (query.as_str(), *position),
+            };
+            if let Some((first, last)) = sql.split_at_checked(pos as usize) {
+                let first = first.lines().last().unwrap_or_default();
+                let last = last.lines().next().unwrap_or_default();
+                write!(w, "{first}{{!ERROR!}}{last}")?;
+            }
+        }
+        Ok(())
     }
 
     /// An indication of the context in which the error occurred.
@@ -645,6 +668,13 @@ impl Error {
 
     pub(crate) fn row_count(expected: RowCountCategory, got: RowCountCategory) -> Error {
         Error::new(Kind::RowCount { expected, got })
+    }
+
+    pub(crate) fn with_statement(mut self, sql: &str) -> Error {
+        if let Kind::Db(x) = &mut self.0.kind {
+            x.statement = Some(sql.to_owned().into_boxed_str());
+        }
+        self
     }
 
     #[cfg(feature = "runtime")]

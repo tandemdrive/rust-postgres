@@ -66,7 +66,11 @@ pub async fn prepare(
     let buf = encode(client, &name, query, types)?;
     let mut responses = client.send(RequestMessages::Single(FrontendMessage::Raw(buf)))?;
 
-    match responses.next().await? {
+    match responses
+        .next()
+        .await
+        .map_err(|e| e.with_statement(query))?
+    {
         Message::ParseComplete => {}
         _ => return Err(Error::unexpected_message()),
     }
