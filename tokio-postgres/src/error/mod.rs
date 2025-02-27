@@ -257,17 +257,14 @@ impl DbError {
         let mut before_str = before[before.len().saturating_sub(2)..].join("\n");
         before_str.push_str(after.first().copied().unwrap_or_default());
 
-        let after_str = after.get(1).copied().unwrap_or_default();
+        let indent = before.last().copied().unwrap_or_default().chars().count();
+        let mut out = format!("{before_str}\n{:width$}^", "", width = indent);
 
-        let indent = before.last().copied().unwrap_or_default().len();
+        if let Some(after_str) = after.get(1).copied() {
+            out = format!("{out}\n{after_str}")
+        }
 
-        Some(format!(
-            "{before_str}\n
-{:width$}^
-{after_str}",
-            "",
-            width = indent
-        ))
+        Some(out)
     }
 
     /// An indication of the context in which the error occurred.
