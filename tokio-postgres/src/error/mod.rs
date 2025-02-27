@@ -244,21 +244,35 @@ impl DbError {
         self.position.as_ref()
     }
 
-    /// Format the position inside a single line of SQL
+    /// Format the position with an arrow and at most one context line
+    /// before and after the error.
     pub fn format_position(&self) -> Option<String> {
         let (sql, pos) = match self.position()? {
             ErrorPosition::Original(idx) => (self.statement.as_deref()?, *idx),
             ErrorPosition::Internal { position, query } => (query.as_str(), *position),
         };
+        // This should not fail as long as postgres gives us a valid byte index.
         let (before, after) = sql.split_at_checked(pos.saturating_sub(1) as usize)?;
-        let before: Vec<&str> = before.lines().collect();
-        let after: Vec<&str> = after.lines().collect();
 
-        let mut before_str = before[before.len().saturating_sub(2)..].join("\n");
-        before_str.push_str(after.first().copied().unwrap_or_default());
+        // Don't use `.lines()` because it removes the last line if it is empty.
+        // `.split('\n')` always returns at least one item.
+        let before: Vec<&str> = before.trim_start().split('\n').collect();
+        let after: Vec<&str> = after.trim_end().split('\n').collect();
 
+        // `before.len().saturating_sub(2)..` is always in range, so unwrap would also work.
+        let mut out = before
+            .get(before.len().saturating_sub(2)..)
+            .unwrap_or_default()
+            .join("\n");
+
+        // `after` always has at least one item, so unwrap would also work.
+        out.push_str(after.first().copied().unwrap_or_default());
+
+        // `before` always has at least one item, so unwrap would also work.
+        // Count chars because we care about the printed width with monospace font.
+        // This is not perfect, but good enough.
         let indent = before.last().copied().unwrap_or_default().chars().count();
-        let mut out = format!("{before_str}\n{:width$}^", "", width = indent);
+        out = format!("{out}\n{:width$}^", "", width = indent);
 
         if let Some(after_str) = after.get(1).copied() {
             out = format!("{out}\n{after_str}")
