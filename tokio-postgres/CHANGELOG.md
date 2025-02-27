@@ -2,7 +2,6 @@
 
 ## TandemDrive
 
-* Add `table_oid` and `field_id` fields to `Columns` struct of prepared statements.
 * Added support for `chrono-tz` 0.9 via the `chrono-tz-0_9` feature.
 * Pretty print error location.
 
