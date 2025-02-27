@@ -15,6 +15,10 @@ struct StatementInner {
 
 impl Drop for StatementInner {
     fn drop(&mut self) {
+        if self.name.is_empty() {
+            // Unnamed statements don't need to be closed
+            return;
+        }
         if let Some(client) = self.client.upgrade() {
             let buf = client.with_buf(|buf| {
                 frontend::close(b'S', &self.name, buf).unwrap();
@@ -29,7 +33,7 @@ impl Drop for StatementInner {
 /// A prepared statement.
 ///
 /// Prepared statements can only be used with the connection that created them.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Statement(Arc<StatementInner>);
 
 impl Statement {
@@ -47,6 +51,15 @@ impl Statement {
         }))
     }
 
+    pub(crate) fn unnamed(params: Vec<Type>, columns: Vec<Column>) -> Statement {
+        Statement(Arc::new(StatementInner {
+            client: Weak::new(),
+            name: String::new(),
+            params,
+            columns,
+        }))
+    }
+
     pub(crate) fn name(&self) -> &str {
         &self.0.name
     }
@@ -59,6 +72,16 @@ impl Statement {
     /// Returns information about the columns returned when the statement is queried.
     pub fn columns(&self) -> &[Column] {
         &self.0.columns
+    }
+}
+
+impl std::fmt::Debug for Statement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        f.debug_struct("Statement")
+            .field("name", &self.0.name)
+            .field("params", &self.0.params)
+            .field("columns", &self.0.columns)
+            .finish_non_exhaustive()
     }
 }
 

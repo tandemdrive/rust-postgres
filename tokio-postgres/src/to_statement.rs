@@ -13,7 +13,7 @@ mod private {
         Query(&'a str),
     }
 
-    impl<'a> ToStatementType<'a> {
+    impl ToStatementType<'_> {
         pub async fn into_statement(self, client: &Arc<InnerClient>) -> Result<Statement, Error> {
             match self {
                 ToStatementType::Statement(s) => Ok(s.clone()),
