@@ -1,5 +1,19 @@
 # Change Log
 
+## Unreleased
+
+## v0.19.9 - 2024-09-15
+
+### Added
+
+* Added support for `jiff` 0.1 via the `with-jiff-01` feature.
+
+## v0.19.8 - 2024-07-21
+
+### Added
+
+* Added `{Client, Transaction, GenericClient}::query_typed`.
+
 ## v0.19.7 - 2023-08-25
 
 ## Fixed

@@ -13,7 +13,7 @@ use crate::{
     SimpleQueryMessage, Statement, ToStatement,
 };
 use bytes::Buf;
-use futures_util::{stream::BoxStream, TryStreamExt};
+use futures_util::TryStreamExt;
 use postgres_protocol::message::frontend;
 use postgres_types::FromSqlOwned;
 use std::fmt;
@@ -248,34 +248,25 @@ impl<'a> Transaction<'a> {
         self.client.query_raw(statement, params).await
     }
 
-    /// Like [`Client::stream`]
-    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn stream<T>(
+    /// Like `Client::query_typed`.
+    pub async fn query_typed(
         &self,
-        statement: &T,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<RowStream, Error>
-    where
-        T: ?Sized + ToStatement + fmt::Debug,
-    {
-        self.client.stream(statement, params).await
+        statement: &str,
+        params: &[(&(dyn ToSql + Sync), Type)],
+    ) -> Result<Vec<Row>, Error> {
+        self.client.query_typed(statement, params).await
     }
 
-    /// Like [`Client::stream_as`]
-    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
-    pub async fn stream_as<R: FromRow, T>(
-        &self,
-        statement: &T,
-        params: &[&(dyn ToSql + Sync)],
-    ) -> Result<BoxStream<'static, Result<R, Error>>, Error>
+    /// Like `Client::query_typed_raw`.
+    pub async fn query_typed_raw<P, I>(&self, query: &str, params: I) -> Result<RowStream, Error>
     where
-        T: ?Sized + ToStatement + fmt::Debug,
+        P: BorrowToSql,
+        I: IntoIterator<Item = (P, Type)>,
     {
-        self.client.stream_as(statement, params).await
+        self.client.query_typed_raw(query, params).await
     }
 
-    /// Like [`Client::execute`]
-    #[cfg_attr(feature = "tracing", tracing::instrument(skip(params)))]
+    /// Like `Client::execute`.
     pub async fn execute<T>(
         &self,
         statement: &T,
