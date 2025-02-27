@@ -27,6 +27,8 @@ mod geo_types_06;
 mod geo_types_07;
 #[cfg(feature = "with-jiff-0_1")]
 mod jiff_01;
+#[cfg(feature = "with-jiff-0_2")]
+mod jiff_02;
 #[cfg(feature = "with-serde_json-1")]
 mod serde_json_1;
 #[cfg(feature = "with-smol_str-01")]
@@ -511,7 +513,7 @@ async fn domain() {
         to_sql_checked!();
     }
 
-    impl<'a> FromSql<'a> for SessionId {
+    impl FromSql<'_> for SessionId {
         fn from_sql(ty: &Type, raw: &[u8]) -> result::Result<Self, Box<dyn Error + Sync + Send>> {
             Vec::<u8>::from_sql(ty, raw).map(SessionId)
         }

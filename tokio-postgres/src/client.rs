@@ -1,5 +1,5 @@
 use crate::codec::BackendMessages;
-use crate::config::SslMode;
+use crate::config::{SslMode, SslNegotiation};
 use crate::connection::{Request, RequestMessages};
 use crate::copy_out::CopyOutStream;
 use crate::error::RowCountCategory;
@@ -183,6 +183,7 @@ pub struct Client {
     #[cfg(feature = "runtime")]
     socket_config: Option<SocketConfig>,
     ssl_mode: SslMode,
+    ssl_negotiation: SslNegotiation,
     process_id: i32,
     secret_key: i32,
 }
@@ -191,6 +192,7 @@ impl Client {
     pub(crate) fn new(
         sender: mpsc::UnboundedSender<Request>,
         ssl_mode: SslMode,
+        ssl_negotiation: SslNegotiation,
         process_id: i32,
         secret_key: i32,
     ) -> Client {
@@ -203,6 +205,7 @@ impl Client {
             #[cfg(feature = "runtime")]
             socket_config: None,
             ssl_mode,
+            ssl_negotiation,
             process_id,
             secret_key,
         }
@@ -693,6 +696,7 @@ impl Client {
             #[cfg(feature = "runtime")]
             socket_config: self.socket_config.clone(),
             ssl_mode: self.ssl_mode,
+            ssl_negotiation: self.ssl_negotiation,
             process_id: self.process_id,
             secret_key: self.secret_key,
         }
