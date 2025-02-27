@@ -30,7 +30,7 @@ pub struct Transaction<'a> {
     done: bool,
 }
 
-impl<'a> fmt::Debug for Transaction<'a> {
+impl fmt::Debug for Transaction<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Transaction")
             .field("savepoint", &self.savepoint)
@@ -444,7 +444,7 @@ impl<'a> Transaction<'a> {
     }
 }
 
-impl<'a> Deref for Transaction<'a> {
+impl Deref for Transaction<'_> {
     type Target = Client;
 
     fn deref(&self) -> &Self::Target {

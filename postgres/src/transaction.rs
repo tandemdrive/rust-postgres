@@ -14,7 +14,7 @@ pub struct Transaction<'a> {
     transaction: Option<tokio_postgres::Transaction<'a>>,
 }
 
-impl<'a> fmt::Debug for Transaction<'a> {
+impl fmt::Debug for Transaction<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&self.transaction, f)
     }
