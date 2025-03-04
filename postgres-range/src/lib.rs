@@ -424,6 +424,10 @@ where
     }
 
     /// Determines if a value lies within this range.
+    #[expect(
+        clippy::unnecessary_map_or,
+        reason = "is_none_or is not available on 1.81 which is used in CI"
+    )]
     pub fn contains(&self, value: &T) -> bool {
         match self.inner {
             Empty => false,
